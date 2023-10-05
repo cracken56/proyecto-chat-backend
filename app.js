@@ -19,3 +19,10 @@ const corsOptions = {
 
 //TODO: add corsOptions as an arg after we are done testing.
 app.use(cors());
+
+app.get('/api/sse/heartbeat', async (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: 'Still alive.',
+  });
+});
