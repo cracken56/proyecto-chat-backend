@@ -21,6 +21,5 @@ const corsOptions = {
 app.use(cors());
 
 app.get('/api/sse/health', async (req, res) => {
-  console.log('Still alive');
   res.status(200).send();
 });
