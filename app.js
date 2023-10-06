@@ -27,34 +27,36 @@ app.get('/api/health', async (req, res) => {
   res.status(200).send();
 });
 
-// Route to add a document to Firestore
-app.get('/api/add-document', async (req, res) => {
-  try {
-    // Add a document to Firestore
-    const newDocRef = firestore.collection('conversations').doc();
-    await newDocRef.set({ name: 'John Doe' });
-
-    res.status(200).json({ message: 'Document added to Firestore' });
-  } catch (error) {
-    console.error('Error adding document to Firestore:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
 app.post('/api/message', async (req, res) => {
   try {
-    const { conversationId, participants, message } = req.body;
+    const { conversationId, message } = req.body;
 
-    // TODO: this implies that the frontend gets a valid conversationId from the database
+    // Retrieve the conversation document from Firestore
     const conversationDoc = firestore
       .collection('conversations')
       .doc(conversationId);
-    await conversationDoc.set({ conversationId, participants, message });
+
+    // Get the existing "messages" array from the conversation document
+    const conversationSnapshot = await conversationDoc.get();
+    const conversationData = conversationSnapshot.data();
+
+    if (!conversationData) {
+      res.status(404).json({ success: false, error: 'Conversation not found' });
+      return;
+    }
+
+    // Append the new message to the "messages" array
+    if (!conversationData.messages) {
+      conversationData.messages = [];
+    }
+    conversationData.messages.push(message);
+
+    // Update the conversation document in Firestore with the updated "messages" array
+    await conversationDoc.set(conversationData);
 
     res.status(200).json({
       success: true,
       message: 'Message sent successfully',
-      conversation: { conversationId, participants, message },
     });
   } catch (error) {
     console.error('Error sending message:', error);
