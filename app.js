@@ -110,7 +110,7 @@ app.post('/api/conversation', async (req, res) => {
   }
 });
 
-app.post('/api/contact-request', async (req, res) => {
+app.post('/api/contact/request', async (req, res) => {
   try {
     const { user, contactToRequest } = req.body;
 
@@ -153,12 +153,12 @@ app.post('/api/contact-request', async (req, res) => {
 });
 
 // This is called when the user accepts the request
-app.post('/api/:user/accept-request/:newContact', async (req, res) => {
+app.post('/api/contact/accept-request/', async (req, res) => {
   try {
-    const { user, newContact } = req.params;
+    const { user, contactToAccept } = req.body;
 
     const userDocRef = firestore.collection('users').doc(user);
-    const contactDocRef = firestore.collection('users').doc(newContact);
+    const contactDocRef = firestore.collection('users').doc(contactToAccept);
 
     const userDoc = await userDocRef.get();
     if (!userDoc.exists) {
@@ -172,7 +172,7 @@ app.post('/api/:user/accept-request/:newContact', async (req, res) => {
 
     // Add each other
     const userContacts = userDoc.data().contacts || [];
-    userContacts.push(newContact);
+    userContacts.push(contactToAccept);
     const contactContacts = contactDoc.data().contacts || [];
     contactContacts.push(user);
 
