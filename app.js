@@ -7,7 +7,6 @@ const bodyParser = require('body-parser'); // Add this line
 const firestore = new Firestore();
 
 const app = express();
-const port = process.env.PORT || 3001;
 
 const server = app.listen(port, () =>
   console.log(`Chat web server listening on port ${port}!`)
@@ -115,7 +114,7 @@ app.post('/api/contact', async (req, res) => {
     const { user, newContact } = req.body;
 
     // Reference to the user's document in Firestore
-    const userDocRef = firestore.collection('contacts').doc(user);
+    const userDocRef = firestore.collection('users').doc(user);
 
     // Fetch the user's document
     const userDoc = await userDocRef.get();
@@ -156,7 +155,7 @@ app.get('/api/contacts/:user', async (req, res) => {
     const { user } = req.params;
 
     // Reference to the user's document in Firestore
-    const userDocRef = firestore.collection('contacts').doc(user);
+    const userDocRef = firestore.collection('users').doc(user);
 
     // Fetch the user's document
     const userDoc = await userDocRef.get();
