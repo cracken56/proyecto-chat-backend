@@ -156,7 +156,7 @@ app.get('/api/contacts/:user', async (req, res) => {
     const { user } = req.params;
 
     // Reference to the user's document in Firestore
-    const userDocRef = firestore.collection('users').doc(user);
+    const userDocRef = firestore.collection('contacts').doc(user);
 
     // Fetch the user's document
     const userDoc = await userDocRef.get();
