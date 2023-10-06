@@ -151,6 +151,36 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+app.get('/api/contacts/:user', async (req, res) => {
+  try {
+    const { user } = req.params;
+
+    // Reference to the user's document in Firestore
+    const userDocRef = firestore.collection('users').doc(user);
+
+    // Fetch the user's document
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      res
+        .status(404)
+        .json({ success: false, error: `User doesn't have any contacts` });
+      return;
+    }
+
+    // Get the contacts array from the user's document data
+    const contacts = userDoc.data().contacts || [];
+
+    res.status(200).json({
+      success: true,
+      contacts,
+    });
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ success: false, error: 'Error fetching contacts' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
