@@ -122,7 +122,7 @@ app.post('/api/contact/request', async (req, res) => {
 
     if (!userDoc.exists) {
       await userDocRef.set({ contactRequests: [] });
-      userDoc; = await userDocRef.get();
+      userDoc = await userDocRef.get();
     }
 
     // Get the existing contacts array from the user's document data
