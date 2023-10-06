@@ -48,6 +48,30 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+const validateUser = async (req, res, next) => {
+  try {
+    const { user, password } = req.body;
+
+    const userRef = firestore.collection('users').doc(user);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const hashedPassword = userDoc.data().hashedPassword;
+
+    if (password === hashedPassword) {
+      next();
+    } else {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  } catch (error) {
+    console.error('Error checking password:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 app.use(validateUser());
 
 app.get('/api/health', async (req, res) => {
@@ -264,27 +288,3 @@ app.get('/api/:user/contact-requests', async (req, res) => {
     res.status(500).json({ success: false, error: 'Error fetching contacts' });
   }
 });
-
-const validateUser = async (req, res, next) => {
-  try {
-    const { user, password } = req.body;
-
-    const userRef = firestore.collection('users').doc(user);
-    const userDoc = await userRef.get();
-
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const hashedPassword = userDoc.data().hashedPassword;
-
-    if (password === hashedPassword) {
-      next();
-    } else {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  } catch (error) {
-    console.error('Error checking password:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-};
