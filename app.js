@@ -118,10 +118,11 @@ app.post('/api/contact/request', async (req, res) => {
     const userDocRef = firestore.collection('users').doc(contactToRequest);
 
     // Fetch the user's document
-    const userDoc = await userDocRef.get();
+    let userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
       await userDocRef.set({ contactRequests: [] });
+      userDoc; = await userDocRef.get();
     }
 
     // Get the existing contacts array from the user's document data
@@ -160,14 +161,16 @@ app.post('/api/contact/accept-request/', async (req, res) => {
     const userDocRef = firestore.collection('users').doc(user);
     const contactDocRef = firestore.collection('users').doc(contactToAccept);
 
-    const userDoc = await userDocRef.get();
+    let userDoc = await userDocRef.get();
     if (!userDoc.exists) {
-      await userDocRef.set({ contacts: [] });
+      await userDocRef.set({ contacts: [], contactRequests: [] });
+      userDoc = await userDocRef.get();
     }
 
-    const contactDoc = await contactDocRef.get();
+    let contactDoc = await contactDocRef.get();
     if (!contactDoc.exists) {
       await contactDocRef.set({ contacts: [] });
+      contactDoc = await contactDocRef.get();
     }
 
     // Add each other
