@@ -72,7 +72,7 @@ const validateUser = async (req, res, next) => {
   }
 };
 
-app.use(validateUser());
+app.use(validateUser);
 
 app.get('/api/health', async (req, res) => {
   res.status(200).send();
