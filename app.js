@@ -189,8 +189,6 @@ app.post('/api/contact/accept-request/', async (req, res) => {
     });
     await contactDocRef.update({ contacts: contactContacts });
 
-    await userDofRef.update({ contactRequests });
-
     res.status(200).json({
       success: true,
       message: 'Contact added successfully',
