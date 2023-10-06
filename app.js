@@ -1,5 +1,9 @@
 const express = require('express');
 const cors = require('cors');
+const { Firestore } = require('@google-cloud/firestore');
+
+// Initialize Firestore client without project configuration
+const firestore = new Firestore();
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -21,3 +25,7 @@ app.use(cors());
 app.get('/api/sse/health', async (req, res) => {
   res.status(200).send();
 });
+
+// Add a document to Firestore
+const newDocRef = firestore.collection('conversations').doc();
+await newDocRef.set({ name: 'John Doe' });
