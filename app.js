@@ -16,7 +16,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions));
+app.use(cors());
 
 app.get('/api/sse/health', async (req, res) => {
   res.status(200).send();
