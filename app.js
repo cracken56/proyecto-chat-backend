@@ -7,6 +7,7 @@ const bodyParser = require('body-parser'); // Add this line
 const firestore = new Firestore();
 
 const app = express();
+const port = process.env.PORT || 3001;
 
 const server = app.listen(port, () =>
   console.log(`Chat web server listening on port ${port}!`)
