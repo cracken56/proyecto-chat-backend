@@ -64,7 +64,7 @@ app.post('/api/message', async (req, res) => {
   }
 });
 
-// Endpoint that is called when the user clicks on a contact on the frontend, causing the main chat window to open
+// Endpoint that is called when the user clicks on a contact for the first time
 app.post('/api/conversation', async (req, res) => {
   try {
     const { participants } = req.body;
@@ -110,40 +110,79 @@ app.post('/api/conversation', async (req, res) => {
   }
 });
 
-app.post('/api/contact', async (req, res) => {
+app.post('/api/contact-request', async (req, res) => {
   try {
-    const { user, newContact } = req.body;
+    const { user, contactToRequest } = req.body;
 
     // Reference to the user's document in Firestore
-    const userDocRef = firestore.collection('users').doc(user);
+    const userDocRef = firestore.collection('users').doc(contactToRequest);
 
     // Fetch the user's document
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      // If the user document doesn't exist, create it with the provided ID
-      await userDocRef.set({ contacts: [] });
+      await userDocRef.set({ contactRequests: [] });
     }
 
     // Get the existing contacts array from the user's document data
-    const existingContacts = userDoc.data().contacts || [];
+    const existingContactRequests = userDoc.data().contactRequests || [];
 
     // Check if the new contact is already in the contacts array
-    if (existingContacts.includes(newContact)) {
-      res.status(400).json({ success: false, error: 'Contact already exists' });
+    if (existingContactRequests.includes(user)) {
+      res
+        .status(400)
+        .json({ success: false, error: 'Contact request already exists' });
       return;
     }
 
     // Add the new contact to the contacts array
-    existingContacts.push(newContact);
+    existingContactRequests.push(user);
 
     // Update the Firestore document with the modified contacts array
-    await userDocRef.update({ contacts: existingContacts });
+    await userDocRef.update({ contactRequests: existingContactRequests });
+
+    res.status(200).json({
+      success: true,
+      message: 'Contact requested successfully',
+      updatedContacts: existingContactRequests,
+    });
+  } catch (error) {
+    console.error('Error adding contact:', error);
+    res.status(500).json({ success: false, error: 'Error adding contact' });
+  }
+});
+
+// This is called when the user accepts the request
+app.post('/api/:user/accept-request/:newContact', async (req, res) => {
+  try {
+    const { user, newContact } = req.params;
+
+    const userDocRef = firestore.collection('users').doc(user);
+    const contactDocRef = firestore.collection('users').doc(newContact);
+
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      await userDocRef.set({ contacts: [] });
+    }
+
+    const contactDoc = await contactDocRef.get();
+    if (!contactDoc.exists) {
+      await contactDocRef.set({ contacts: [] });
+    }
+
+    // Add each other
+    const userContacts = userDoc.data().contacts || [];
+    userContacts.push(newContact);
+    const contactContacts = contactDoc.data().contacts || [];
+    contactContacts.push(user);
+
+    // Update the Firestore document with the modified contacts array
+    await userDocRef.update({ contacts: userContacts });
+    await contactDocRef.update({ contacts: contactContacts });
 
     res.status(200).json({
       success: true,
       message: 'Contact added successfully',
-      updatedContacts: existingContacts,
     });
   } catch (error) {
     console.error('Error adding contact:', error);
@@ -162,9 +201,7 @@ app.get('/api/:user/contacts', async (req, res) => {
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      res
-        .status(404)
-        .json({ success: false, error: `User doesn't have any contacts` });
+      res.status(404).json({ success: false, error: `User not found` });
       return;
     }
 
@@ -174,6 +211,34 @@ app.get('/api/:user/contacts', async (req, res) => {
     res.status(200).json({
       success: true,
       contacts,
+    });
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ success: false, error: 'Error fetching contacts' });
+  }
+});
+
+app.get('/api/:user/contact-requests', async (req, res) => {
+  try {
+    const { user } = req.params;
+
+    // Reference to the user's document in Firestore
+    const userDocRef = firestore.collection('users').doc(user);
+
+    // Fetch the user's document
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      res.status(404).json({ success: false, error: `User not found` });
+      return;
+    }
+
+    // Get the contacts array from the user's document data
+    const contactRequests = userDoc.data().contactRequests || [];
+
+    res.status(200).json({
+      success: true,
+      contactRequests,
     });
   } catch (error) {
     console.error('Error fetching contacts:', error);
