@@ -144,7 +144,7 @@ app.post('/api/contact/request', async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Contact requested successfully',
-      updatedContacts: existingContactRequests,
+      updatedContactRequests: existingContactRequests,
     });
   } catch (error) {
     console.error('Error adding contact:', error);
@@ -176,9 +176,20 @@ app.post('/api/contact/accept-request/', async (req, res) => {
     const contactContacts = contactDoc.data().contacts || [];
     contactContacts.push(user);
 
-    // Update the Firestore document with the modified contacts array
-    await userDocRef.update({ contacts: userContacts });
+    // Remove the contact request
+    const userRequests = userDoc.data().contactRequests || [];
+    const updatedUserRequests = userRequests.filter(
+      (request) => request !== contactToAccept
+    );
+
+    // Update the Firestore document with the modified contacts and contactRequests arrays
+    await userDocRef.update({
+      contacts: userContacts,
+      contactRequests: updatedUserRequests,
+    });
     await contactDocRef.update({ contacts: contactContacts });
+
+    await userDofRef.update({ contactRequests });
 
     res.status(200).json({
       success: true,
