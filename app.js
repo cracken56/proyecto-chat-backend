@@ -3,18 +3,7 @@ const cors = require('cors');
 const { Firestore } = require('@google-cloud/firestore');
 
 // Initialize Firestore client
-async function initializeFirestore() {
-  try {
-    const firestore = new Firestore();
-    return firestore;
-  } catch (error) {
-    console.error('Firestore initialization error:', error);
-    throw error;
-  }
-}
-
-// Call the initialization function and handle any potential errors
-const firestore = await initializeFirestore();
+const firestore = new Firestore();
 
 const app = express();
 const port = process.env.PORT || 3001;
