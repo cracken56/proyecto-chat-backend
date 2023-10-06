@@ -150,7 +150,7 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-app.get('/api/contacts/:user', async (req, res) => {
+app.get('/api/:user/contacts', async (req, res) => {
   try {
     const { user } = req.params;
 
