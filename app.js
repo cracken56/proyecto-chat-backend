@@ -64,7 +64,7 @@ app.post('/api/message', async (req, res) => {
   }
 });
 
-// Endpoint used to create a brand new conversation with somebody
+// Endpoint that is called when the user clicks on a contact on the frontend, causing the main chat window to open
 app.post('/api/conversation', async (req, res) => {
   try {
     const { participants } = req.body;
@@ -107,5 +107,42 @@ app.post('/api/conversation', async (req, res) => {
       success: false,
       error: 'Error creating or checking conversation',
     });
+  }
+});
+
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { user, newContact } = req.body;
+
+    const contactsDocRef = firestore.collection('contacts').doc(user);
+    const contactsDoc = await contactsDocRef.get();
+
+    if (!contactsDoc.exists) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    // Get the existing contacts array from the document data
+    const existingContacts = contactsDoc.data().contacts || [];
+
+    // Check if the new contact is already in the contacts array
+    if (existingContacts.includes(newContact)) {
+      res.status(400).json({ success: false, error: 'Contact already exists' });
+      return;
+    }
+
+    // Add the new contact to the contacts array
+    existingContacts.push(newContact);
+
+    // Update the Firestore document with the modified contacts array
+    await contactsDocRef.set({ contacts: existingContacts });
+
+    res.status(200).json({
+      success: true,
+      message: 'Contact added successfully',
+    });
+  } catch (error) {
+    console.error('Error adding contact:', error);
+    res.status(500).json({ success: false, error: 'Error adding contact' });
   }
 });
