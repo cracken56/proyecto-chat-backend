@@ -180,7 +180,3 @@ app.get('/api/contacts/:user', async (req, res) => {
     res.status(500).json({ success: false, error: 'Error fetching contacts' });
   }
 });
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
