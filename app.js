@@ -21,7 +21,34 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(), bodyParser.json(), validateUser());
+app.use(cors(), bodyParser.json());
+
+app.post('/api/register', async (req, res) => {
+  try {
+    const { username, hashedPassword } = req.body;
+
+    // Check if the username already exists in Firestore
+    const userRef = firestore.collection('users').doc(username);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Save the user's data to Firestore, including the hashed password
+    await userRef.set({
+      username,
+      hashedPassword,
+    });
+
+    res.status(200).json({ message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ error: 'Error registering user' });
+  }
+});
+
+app.use(validateUser());
 
 app.get('/api/health', async (req, res) => {
   res.status(200).send();
@@ -235,31 +262,6 @@ app.get('/api/:user/contact-requests', async (req, res) => {
   } catch (error) {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ success: false, error: 'Error fetching contacts' });
-  }
-});
-
-app.post('/api/register', async (req, res) => {
-  try {
-    const { username, hashedPassword } = req.body;
-
-    // Check if the username already exists in Firestore
-    const userRef = firestore.collection('users').doc(username);
-    const userDoc = await userRef.get();
-
-    if (userDoc.exists) {
-      return res.status(400).json({ error: 'Username already exists' });
-    }
-
-    // Save the user's data to Firestore, including the hashed password
-    await userRef.set({
-      username,
-      hashedPassword,
-    });
-
-    res.status(200).json({ message: 'User registered successfully' });
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).json({ error: 'Error registering user' });
   }
 });
 
