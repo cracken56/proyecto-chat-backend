@@ -25,19 +25,18 @@ app.use(cors(), bodyParser.json());
 
 app.post('/api/register', async (req, res) => {
   try {
-    const { username, hashedPassword } = req.body;
+    const { user, hashedPassword } = req.body;
 
     // Check if the username already exists in Firestore
-    const userRef = firestore.collection('users').doc(username);
+    const userRef = firestore.collection('users').doc(user);
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
-      return res.status(400).json({ error: 'Username already exists' });
+      return res.status(400).json({ error: 'User already exists' });
     }
 
     // Save the user's data to Firestore, including the hashed password
     await userRef.set({
-      username,
       hashedPassword,
     });
 
