@@ -67,21 +67,43 @@ app.post('/api/conversation', async (req, res) => {
   try {
     const { participants } = req.body;
 
-    const conversationDoc = firestore.collection('conversations').doc();
-    await conversationDoc.set({
-      conversationId: conversationDoc.id,
-      participants,
-    });
+    // Query Firestore to check for existing conversations with the same participants
+    const existingConversationQuery = firestore
+      .collection('conversations')
+      .where('participants', 'array-contains', ...participants)
+      .get();
 
-    res.status(200).json({
-      success: true,
-      message: 'Conversation created successfully',
-      conversation: { conversationId, participants },
-    });
+    // Check if any matching conversations exist
+    const existingConversations = (await existingConversationQuery).docs;
+
+    if (existingConversations.length > 0) {
+      // Conversation with the same participants already exists
+      const existingConversation = existingConversations[0].data();
+
+      res.status(200).json({
+        success: true,
+        message: 'Conversation already exists',
+        conversation: existingConversation,
+      });
+    } else {
+      // Create a new conversation if none exists
+      const conversationDoc = firestore.collection('conversations').doc();
+      await conversationDoc.set({
+        conversationId: conversationDoc.id,
+        participants,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Conversation created successfully',
+        conversation: { conversationId: conversationDoc.id, participants },
+      });
+    }
   } catch (error) {
-    console.error('Error sending message:', error);
-    res
-      .status(500)
-      .json({ success: false, error: 'Error creating conversation' });
+    console.error('Error creating or checking conversation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error creating or checking conversation',
+    });
   }
 });
