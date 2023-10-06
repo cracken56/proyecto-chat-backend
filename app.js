@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Firestore } = require('@google-cloud/firestore');
+const bodyParser = require('body-parser'); // Add this line
 
 // Initialize Firestore client
 const firestore = new Firestore();
@@ -20,7 +21,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-app.use(cors());
+app.use(cors(), bodyParser.json());
 
 app.get('/api/health', async (req, res) => {
   res.status(200).send();
@@ -37,5 +38,50 @@ app.get('/api/add-document', async (req, res) => {
   } catch (error) {
     console.error('Error adding document to Firestore:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/api/message', async (req, res) => {
+  try {
+    const { conversationId, participants, message } = req.body;
+
+    // TODO: this implies that the frontend gets a valid conversationId from the database
+    const conversationDoc = firestore
+      .collection('conversations')
+      .doc(conversationId);
+    await conversationDoc.set({ conversationId, participants, message });
+
+    res.status(200).json({
+      success: true,
+      message: 'Message sent successfully',
+      conversation: { conversationId, participants, message },
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ success: false, error: 'Error sending message' });
+  }
+});
+
+// Endpoint used to create a brand new conversation with somebody
+app.post('/api/conversation', async (req, res) => {
+  try {
+    const { participants } = req.body;
+
+    const conversationDoc = firestore.collection('conversations').doc();
+    await conversationDoc.set({
+      conversationId: conversationDoc.id,
+      participants,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Conversation created successfully',
+      conversation: { conversationId, participants },
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res
+      .status(500)
+      .json({ success: false, error: 'Error creating conversation' });
   }
 });
