@@ -21,7 +21,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(), bodyParser.json());
+app.use(cors(), bodyParser.json(), validateUser());
 
 app.get('/api/health', async (req, res) => {
   res.status(200).send();
@@ -31,12 +31,10 @@ app.post('/api/message', async (req, res) => {
   try {
     const { conversationId, message } = req.body;
 
-    // Retrieve the conversation document from Firestore
     const conversationDoc = firestore
       .collection('conversations')
       .doc(conversationId);
 
-    // Get the existing "messages" array from the conversation document
     const conversationSnapshot = await conversationDoc.get();
     const conversationData = conversationSnapshot.data();
 
@@ -45,13 +43,11 @@ app.post('/api/message', async (req, res) => {
       return;
     }
 
-    // Append the new message to the "messages" array
     if (!conversationData.messages) {
       conversationData.messages = [];
     }
     conversationData.messages.push(message);
 
-    // Update the conversation document in Firestore with the updated "messages" array
     await conversationDoc.set(conversationData);
 
     res.status(200).json({
@@ -69,7 +65,6 @@ app.post('/api/conversation', async (req, res) => {
   try {
     const { participants } = req.body;
 
-    // Query Firestore to check for existing conversations with the same participants
     const existingConversationQuery = firestore
       .collection('conversations')
       .where('participants', 'array-contains', ...participants)
@@ -79,7 +74,6 @@ app.post('/api/conversation', async (req, res) => {
     const existingConversations = (await existingConversationQuery).docs;
 
     if (existingConversations.length > 0) {
-      // Conversation with the same participants already exists
       const existingConversation = existingConversations[0].data();
 
       res.status(200).json({
@@ -114,10 +108,8 @@ app.post('/api/contact/request', async (req, res) => {
   try {
     const { user, contactToRequest } = req.body;
 
-    // Reference to the user's document in Firestore
     const userDocRef = firestore.collection('users').doc(contactToRequest);
 
-    // Fetch the user's document
     let userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
@@ -125,10 +117,8 @@ app.post('/api/contact/request', async (req, res) => {
       userDoc = await userDocRef.get();
     }
 
-    // Get the existing contacts array from the user's document data
     const existingContactRequests = userDoc.data().contactRequests || [];
 
-    // Check if the new contact is already in the contacts array
     if (existingContactRequests.includes(user)) {
       res
         .status(400)
@@ -136,10 +126,8 @@ app.post('/api/contact/request', async (req, res) => {
       return;
     }
 
-    // Add the new contact to the contacts array
     existingContactRequests.push(user);
 
-    // Update the Firestore document with the modified contacts array
     await userDocRef.update({ contactRequests: existingContactRequests });
 
     res.status(200).json({
@@ -179,13 +167,11 @@ app.post('/api/contact/accept-request/', async (req, res) => {
     const contactContacts = contactDoc.data().contacts || [];
     contactContacts.push(user);
 
-    // Remove the contact request
     const userRequests = userDoc.data().contactRequests || [];
     const updatedUserRequests = userRequests.filter(
       (request) => request !== contactToAccept
     );
 
-    // Update the Firestore document with the modified contacts and contactRequests arrays
     await userDocRef.update({
       contacts: userContacts,
       contactRequests: updatedUserRequests,
@@ -206,10 +192,8 @@ app.get('/api/:user/contacts', async (req, res) => {
   try {
     const { user } = req.params;
 
-    // Reference to the user's document in Firestore
     const userDocRef = firestore.collection('users').doc(user);
 
-    // Fetch the user's document
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
@@ -217,7 +201,6 @@ app.get('/api/:user/contacts', async (req, res) => {
       return;
     }
 
-    // Get the contacts array from the user's document data
     const contacts = userDoc.data().contacts || [];
 
     res.status(200).json({
@@ -234,10 +217,8 @@ app.get('/api/:user/contact-requests', async (req, res) => {
   try {
     const { user } = req.params;
 
-    // Reference to the user's document in Firestore
     const userDocRef = firestore.collection('users').doc(user);
 
-    // Fetch the user's document
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
@@ -245,7 +226,6 @@ app.get('/api/:user/contact-requests', async (req, res) => {
       return;
     }
 
-    // Get the contacts array from the user's document data
     const contactRequests = userDoc.data().contactRequests || [];
 
     res.status(200).json({
@@ -257,3 +237,52 @@ app.get('/api/:user/contact-requests', async (req, res) => {
     res.status(500).json({ success: false, error: 'Error fetching contacts' });
   }
 });
+
+app.post('/api/register', async (req, res) => {
+  try {
+    const { username, hashedPassword } = req.body;
+
+    // Check if the username already exists in Firestore
+    const userRef = firestore.collection('users').doc(username);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Save the user's data to Firestore, including the hashed password
+    await userRef.set({
+      username,
+      hashedPassword,
+    });
+
+    res.status(200).json({ message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ error: 'Error registering user' });
+  }
+});
+
+const validateUser = async (req, res, next) => {
+  try {
+    const { user, password } = req.body;
+
+    const userRef = firestore.collection('users').doc(user);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const hashedPassword = userDoc.data().hashedPassword;
+
+    if (password === hashedPassword) {
+      next();
+    } else {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  } catch (error) {
+    console.error('Error checking password:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
