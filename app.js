@@ -62,7 +62,7 @@ app.post('/api/register', async (req, res) => {
 
     fetchSecretKey()
       .then((secretKey) => {
-        token = jwt.sign({ user }, secretKey);
+        token = jwt.sign({ user, password }, secretKey);
 
         // Save the user's data to Firestore, including the hashed password
         return userRef.set({
