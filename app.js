@@ -101,7 +101,7 @@ const verifyToken = (req, res, next) => {
         }
 
         // If the token is valid, you can attach the decoded payload to the request object
-        req.payload = decoded;
+        req.user = decoded.user;
         next(); // Continue to the next middleware or route handler
       });
     })
@@ -118,6 +118,12 @@ app.post('/api/message', async (req, res) => {
   try {
     const { conversationId, message } = req.body;
 
+    // TODO: uncomment this when we enable authentication
+    // const user = req.user;
+    // if (message.sender !== user) {
+    //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    // }
+
     const conversationDocRef = firestore
       .collection('conversations')
       .doc(conversationId);
@@ -131,15 +137,17 @@ app.post('/api/message', async (req, res) => {
     }
 
     // Check if the user sending the message is a participant in the conversation
-    const participants = conversationData.participants || [];
-    if (!participants.includes(req.user)) {
-      res.status(403).json({ success: false, error: 'Unauthorized' });
-      return;
-    }
+    // TODO: uncomment this when we enable authentication
+    //const participants = conversationData.participants || [];
+    // if (!participants.includes(req.user)) {
+    //   res.status(403).json({ success: false, error: 'Unauthorized' });
+    //   return;
+    // }
 
     if (!conversationData.messages) {
       conversationData.messages = [];
     }
+    message.timestamp = new Date().getTime();
     conversationData.messages.push(message);
 
     await conversationDocRef.set(conversationData);
@@ -154,42 +162,51 @@ app.post('/api/message', async (req, res) => {
   }
 });
 
-app.post('/api/contact/request', async (req, res) => {
-  try {
-    const { user, contactToRequest } = req.body;
+app.post(
+  '/api/:user/contact/request/send/:contactToRequest',
+  async (req, res) => {
+    try {
+      const { user, contactToRequest } = req.params;
 
-    const userDocRef = firestore.collection('users').doc(contactToRequest);
+      // TODO: uncomment this when we enable authentication
+      // const userToken = req.user;
+      // if (user !== userToken) {
+      //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
+      // }
 
-    let userDoc = await userDocRef.get();
+      const userDocRef = firestore.collection('users').doc(contactToRequest);
 
-    if (!userDoc.exists) {
-      await userDocRef.set({ contactRequests: [] });
-      userDoc = await userDocRef.get();
+      let userDoc = await userDocRef.get();
+
+      if (!userDoc.exists) {
+        await userDocRef.set({ contactRequests: [] });
+        userDoc = await userDocRef.get();
+      }
+
+      const existingContactRequests = userDoc.data().contactRequests || [];
+
+      if (existingContactRequests.includes(user)) {
+        res
+          .status(400)
+          .json({ success: false, error: 'Contact request already exists' });
+        return;
+      }
+
+      existingContactRequests.push(user);
+
+      await userDocRef.update({ contactRequests: existingContactRequests });
+
+      res.status(200).json({
+        success: true,
+        message: 'Contact requested successfully',
+        updatedContactRequests: existingContactRequests,
+      });
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      res.status(500).json({ success: false, error: 'Error adding contact' });
     }
-
-    const existingContactRequests = userDoc.data().contactRequests || [];
-
-    if (existingContactRequests.includes(user)) {
-      res
-        .status(400)
-        .json({ success: false, error: 'Contact request already exists' });
-      return;
-    }
-
-    existingContactRequests.push(user);
-
-    await userDocRef.update({ contactRequests: existingContactRequests });
-
-    res.status(200).json({
-      success: true,
-      message: 'Contact requested successfully',
-      updatedContactRequests: existingContactRequests,
-    });
-  } catch (error) {
-    console.error('Error adding contact:', error);
-    res.status(500).json({ success: false, error: 'Error adding contact' });
   }
-});
+);
 
 const createConversation = async (participants, res, message) => {
   const existingConversationQuery = firestore
@@ -224,56 +241,71 @@ const createConversation = async (participants, res, message) => {
 };
 
 // This is called when the user accepts the request
-app.post('/api/contact/accept-request/', async (req, res) => {
-  try {
-    const { user, contactToAccept } = req.body;
+app.post(
+  '/api/:user/contact/request/accept/:contactToAccept',
+  async (req, res) => {
+    try {
+      const { user, contactToAccept } = req.params;
 
-    const userDocRef = firestore.collection('users').doc(user);
-    const contactDocRef = firestore.collection('users').doc(contactToAccept);
+      // TODO: uncomment this when we enable authentication
+      // const userToken = req.user;
+      // if (user !== userToken) {
+      //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
+      // }
 
-    let userDoc = await userDocRef.get();
-    if (!userDoc.exists) {
-      await userDocRef.set({ contacts: [], contactRequests: [] });
-      userDoc = await userDocRef.get();
+      const userDocRef = firestore.collection('users').doc(user);
+      const contactDocRef = firestore.collection('users').doc(contactToAccept);
+
+      let userDoc = await userDocRef.get();
+      if (!userDoc.exists) {
+        await userDocRef.set({ contacts: [], contactRequests: [] });
+        userDoc = await userDocRef.get();
+      }
+
+      let contactDoc = await contactDocRef.get();
+      if (!contactDoc.exists) {
+        await contactDocRef.set({ contacts: [] });
+        contactDoc = await contactDocRef.get();
+      }
+
+      // Add each other
+      const userContacts = userDoc.data().contacts || [];
+      userContacts.push(contactToAccept);
+      const contactContacts = contactDoc.data().contacts || [];
+      contactContacts.push(user);
+
+      const userRequests = userDoc.data().contactRequests || [];
+      const updatedUserRequests = userRequests.filter(
+        (request) => request !== contactToAccept
+      );
+
+      await userDocRef.update({
+        contacts: userContacts,
+        contactRequests: updatedUserRequests,
+      });
+      await contactDocRef.update({ contacts: contactContacts });
+
+      createConversation(
+        [user, contactToAccept],
+        res,
+        'Contact added successfully'
+      );
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      res.status(500).json({ success: false, error: 'Error adding contact' });
     }
-
-    let contactDoc = await contactDocRef.get();
-    if (!contactDoc.exists) {
-      await contactDocRef.set({ contacts: [] });
-      contactDoc = await contactDocRef.get();
-    }
-
-    // Add each other
-    const userContacts = userDoc.data().contacts || [];
-    userContacts.push(contactToAccept);
-    const contactContacts = contactDoc.data().contacts || [];
-    contactContacts.push(user);
-
-    const userRequests = userDoc.data().contactRequests || [];
-    const updatedUserRequests = userRequests.filter(
-      (request) => request !== contactToAccept
-    );
-
-    await userDocRef.update({
-      contacts: userContacts,
-      contactRequests: updatedUserRequests,
-    });
-    await contactDocRef.update({ contacts: contactContacts });
-
-    createConversation(
-      [user, contactToAccept],
-      res,
-      'Contact added successfully'
-    );
-  } catch (error) {
-    console.error('Error adding contact:', error);
-    res.status(500).json({ success: false, error: 'Error adding contact' });
   }
-});
+);
 
 app.get('/api/:user/contacts', async (req, res) => {
   try {
     const { user } = req.params;
+
+    // TODO: uncomment this when we enable authentication
+    // const userToken = req.user;
+    // if (user !== userToken) {
+    //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    // }
 
     const userDocRef = firestore.collection('users').doc(user);
 
@@ -296,9 +328,15 @@ app.get('/api/:user/contacts', async (req, res) => {
   }
 });
 
-app.get('/api/:user/contact-requests', async (req, res) => {
+app.get('/api/:user/contact/requests', async (req, res) => {
   try {
     const { user } = req.params;
+
+    // TODO: uncomment this when we enable authentication
+    // const userToken = req.user;
+    // if (user !== userToken) {
+    //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    // }
 
     const userDocRef = firestore.collection('users').doc(user);
 
