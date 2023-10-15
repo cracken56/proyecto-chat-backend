@@ -21,7 +21,9 @@ const fetchSecretKey = async () => {
       name: secretName,
     });
 
-    return version.payload.data.toString('utf8');
+    const secret = version.payload.data.toString('utf8');
+    console.log(secret);
+    return secret;
   } catch (err) {
     console.error('Error accessing secret:', err);
   }
@@ -58,6 +60,7 @@ app.post('/api/register', async (req, res) => {
     }
 
     let token;
+
     fetchSecretKey()
       .then((secretKey) => {
         token = jwt.sign({ user }, secretKey);
