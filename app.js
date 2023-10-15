@@ -22,7 +22,6 @@ const fetchSecretKey = async () => {
     });
 
     const secret = version.payload.data.toString('utf8');
-    console.log(secret);
     return secret;
   } catch (err) {
     console.error('Error accessing secret:', err);
