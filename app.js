@@ -15,7 +15,7 @@ const port = process.env.PORT || 3001;
 const client = new SecretManagerServiceClient();
 
 const fetchSecretKey = async () => {
-  const secretName = 'Key';
+  const secretName = 'projects/brave-server-401207/secrets/Key/versions/latest';
   try {
     const [version] = await client.accessSecretVersion({
       name: secretName,
