@@ -1,6 +1,8 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const { Firestore } = require('@google-cloud/firestore');
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 const bodyParser = require('body-parser'); // Add this line
 
 // Initialize Firestore client
@@ -8,6 +10,22 @@ const firestore = new Firestore();
 
 const app = express();
 const port = process.env.PORT || 3001;
+
+// Initialize SecretManagerService client
+const client = new SecretManagerServiceClient();
+
+const fetchSecretKey = async () => {
+  const secretName = 'Key';
+  try {
+    const [version] = await client.accessSecretVersion({
+      name: secretName,
+    });
+
+    return version.payload.data.toString('utf8');
+  } catch (err) {
+    console.error('Error accessing secret:', err);
+  }
+};
 
 const server = app.listen(port, () =>
   console.log(`Chat web server listening on port ${port}!`)
@@ -44,39 +62,53 @@ app.post('/api/register', async (req, res) => {
       hashedPassword: password,
     });
 
-    res.status(200).json({ message: 'User registered successfully' });
+    // Issue a JWT to the user
+    fetchSecretKey()
+      .then((secretKey) => {
+        const token = jwt.sign({ user }, secretKey);
+        res
+          .status(200)
+          .json({ message: 'User registered successfully', token: token });
+      })
+      .catch((error) => {
+        console.error('Error fetching secret key:', error);
+        res.status(500).json({ error: 'Error fetching secret key' });
+      });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Error registering user' });
   }
 });
 
-const validateUser = async (req, res, next) => {
-  try {
-    const { user, password } = req.body;
+// Define a function to create the middleware
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization;
 
-    const userRef = firestore.collection('users').doc(user);
-    const userDoc = await userRef.get();
-
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const hashedPassword = userDoc.data().hashedPassword;
-
-    if (password === hashedPassword) {
-      req.user = user;
-      next();
-    } else {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  } catch (error) {
-    console.error('Error checking password:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+  if (!token) {
+    return res.status(401).json({ message: 'Token is missing' });
   }
+
+  // Verify the token with your secret key
+  fetchSecretKey()
+    .then((secretKey) => {
+      jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) {
+          return res.status(401).json({ message: 'Token is invalid' });
+        }
+
+        // If the token is valid, you can attach the decoded payload to the request object
+        req.payload = decoded;
+        next(); // Continue to the next middleware or route handler
+      });
+    })
+    .catch((error) => {
+      console.error('Error fetching secret key:', error);
+      res.status(500).json({ error: 'Error fetching secret key' });
+    });
 };
 
-app.use(validateUser);
+// TODO: temporarily disabled for testing. When enabled, change req.body for req.payload on the endpoints
+//app.use(verifyToken);
 
 app.post('/api/message', async (req, res) => {
   try {
