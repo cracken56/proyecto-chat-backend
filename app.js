@@ -57,25 +57,25 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Issue a JWT to the user
     let token;
     fetchSecretKey()
       .then((secretKey) => {
         token = jwt.sign({ user }, secretKey);
+
+        // Save the user's data to Firestore, including the hashed password
+        return userRef.set({
+          hashedPassword: password,
+        });
+      })
+      .then(() => {
+        res
+          .status(200)
+          .json({ message: 'User registered successfully', token: token });
       })
       .catch((error) => {
         console.error('Error fetching secret key:', error);
         res.status(500).json({ error: 'Error fetching secret key' });
       });
-
-    // Save the user's data to Firestore, including the hashed password
-    await userRef.set({
-      hashedPassword: password,
-    });
-
-    res
-      .status(200)
-      .json({ message: 'User registered successfully', token: token });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Error registering user' });
