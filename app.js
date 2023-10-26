@@ -63,13 +63,13 @@ app.post('/api/register', async (req, res) => {
 
     fetchSecretKey()
       .then((secretKey) => {
-        token = jwt.sign({ user, hashedPassword }, secretKey);
-
-        return userRef.set({
+        return jwt.sign({ user, hashedPassword }, secretKey);
+      })
+      .then(async (token) => {
+        await userRef.set({
           hashedPassword,
         });
-      })
-      .then(() => {
+
         res
           .status(200)
           .json({ message: 'User registered successfully', token: token });
@@ -103,31 +103,23 @@ app.post('/api/login', async (req, res) => {
         console.error('Error comparing passwords:', err);
         res.status(500).json({ error: `Error comparing passwords: ${err}` });
       } else if (result) {
-        console.log('Login successful');
+        fetchSecretKey()
+          .then((secretKey) => {
+            return jwt.sign({ user, hashedPassword }, secretKey);
+          })
+          .then((token) => {
+            res
+              .status(200)
+              .json({ message: 'User logged in successfully', token: token });
+          })
+          .catch((error) => {
+            console.error('Error fetching secret key:', error);
+            res.status(500).json({ error: 'Error fetching secret key' });
+          });
       } else {
         return res.status(401).json({ error: 'Incorrect password' });
       }
     });
-
-    let token;
-
-    fetchSecretKey()
-      .then((secretKey) => {
-        token = jwt.sign({ user, hashedPassword }, secretKey);
-
-        return userRef.set({
-          hashedPassword,
-        });
-      })
-      .then(() => {
-        res
-          .status(200)
-          .json({ message: 'User logged in successfully', token: token });
-      })
-      .catch((error) => {
-        console.error('Error fetching secret key:', error);
-        res.status(500).json({ error: 'Error fetching secret key' });
-      });
   } catch (error) {
     console.error('Error logging user:', error);
     res.status(500).json({ error: 'Error logging user' });
