@@ -55,7 +55,7 @@ app.post('/api/register', async (req, res) => {
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(409).json({ error: 'User already exists' });
     }
 
     let token;
@@ -64,7 +64,6 @@ app.post('/api/register', async (req, res) => {
       .then((secretKey) => {
         token = jwt.sign({ user, hashedPassword }, secretKey);
 
-        // Save the user's data to Firestore, including the hashed password
         return userRef.set({
           hashedPassword,
         });
@@ -187,7 +186,7 @@ app.post(
 
       if (existingContactRequests.includes(user)) {
         res
-          .status(400)
+          .status(409)
           .json({ success: false, error: 'Contact request already exists' });
         return;
       }
