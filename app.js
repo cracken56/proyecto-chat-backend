@@ -48,7 +48,7 @@ app.get('/api/health', async (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   try {
-    const { user, password } = req.body;
+    const { user, hashedPassword } = req.body;
 
     // Check if the username already exists in Firestore
     const userRef = firestore.collection('users').doc(user);
@@ -62,11 +62,11 @@ app.post('/api/register', async (req, res) => {
 
     fetchSecretKey()
       .then((secretKey) => {
-        token = jwt.sign({ user, password }, secretKey);
+        token = jwt.sign({ user, hashedPassword }, secretKey);
 
         // Save the user's data to Firestore, including the hashed password
         return userRef.set({
-          hashedPassword: password,
+          hashedPassword,
         });
       })
       .then(() => {
