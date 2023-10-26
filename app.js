@@ -35,10 +35,10 @@ const server = app.listen(port, () =>
 server.keepAliveTimeout = 120 * 1000;
 server.headersTimeout = 120 * 1000;
 
-// const corsOptions = {
-//   origin: 'https://chat.onrender.com',
-//   optionsSuccessStatus: 200,
-// };
+const corsOptions = {
+  origin: 'https://proyecto-chat.onrender.com',
+  optionsSuccessStatus: 200,
+};
 
 app.use(cors(), bodyParser.json());
 
@@ -110,18 +110,16 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-// TODO: temporarily disabled for testing. When enabled, change req.body for req.payload on the endpoints
-//app.use(verifyToken);
+app.use(verifyToken);
 
 app.put('/api/message', async (req, res) => {
   try {
     const { conversationId, message } = req.body;
 
-    // TODO: uncomment this when we enable authentication
-    // const user = req.user;
-    // if (message.sender !== user) {
-    //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const user = req.user;
+    if (message.sender !== user) {
+      return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const conversationDocRef = firestore
       .collection('conversations')
@@ -136,12 +134,11 @@ app.put('/api/message', async (req, res) => {
     }
 
     // Check if the user sending the message is a participant in the conversation
-    // TODO: uncomment this when we enable authentication
-    //const participants = conversationData.participants || [];
-    // if (!participants.includes(req.user)) {
-    //   res.status(403).json({ success: false, error: 'Unauthorized' });
-    //   return;
-    // }
+    const participants = conversationData.participants || [];
+    if (!participants.includes(req.user)) {
+      res.status(403).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
 
     if (!conversationData.messages) {
       conversationData.messages = [];
@@ -167,11 +164,10 @@ app.post(
     try {
       const { user, contactToRequest } = req.params;
 
-      // TODO: uncomment this when we enable authentication
-      // const userToken = req.user;
-      // if (user !== userToken) {
-      //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
-      // }
+      const userToken = req.user;
+      if (user !== userToken) {
+        return res.status(403).json({ success: false, error: 'Unauthorized.' });
+      }
 
       const userDocRef = firestore.collection('users').doc(contactToRequest);
 
@@ -246,11 +242,10 @@ app.post(
     try {
       const { user, contactToAccept } = req.params;
 
-      // TODO: uncomment this when we enable authentication
-      // const userToken = req.user;
-      // if (user !== userToken) {
-      //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
-      // }
+      const userToken = req.user;
+      if (user !== userToken) {
+        return res.status(403).json({ success: false, error: 'Unauthorized.' });
+      }
 
       const userDocRef = firestore.collection('users').doc(user);
       const contactDocRef = firestore.collection('users').doc(contactToAccept);
@@ -300,11 +295,10 @@ app.get('/api/:user/contacts', async (req, res) => {
   try {
     const { user } = req.params;
 
-    // TODO: uncomment this when we enable authentication
-    // const userToken = req.user;
-    // if (user !== userToken) {
-    //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const userToken = req.user;
+    if (user !== userToken) {
+      return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const userDocRef = firestore.collection('users').doc(user);
 
@@ -331,11 +325,10 @@ app.get('/api/:user/contacts/requests', async (req, res) => {
   try {
     const { user } = req.params;
 
-    // TODO: uncomment this when we enable authentication
-    // const userToken = req.user;
-    // if (user !== userToken) {
-    //   return res.status(403).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const userToken = req.user;
+    if (user !== userToken) {
+      return res.status(403).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const userDocRef = firestore.collection('users').doc(user);
 
