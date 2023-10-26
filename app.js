@@ -96,7 +96,9 @@ app.post('/api/login', async (req, res) => {
       return res.status(404).json({ error: 'User does not exist' });
     }
 
-    bcrypt.compare(password, userDoc.hashedPassword, (err, result) => {
+    const hashedPassword = userDoc.hashedPassword;
+
+    bcrypt.compare(password, hashedPassword, (err, result) => {
       if (err) {
         console.error('Error comparing passwords:', err);
         res.status(500).json({ error: `Error comparing passwords: ${err}` });
