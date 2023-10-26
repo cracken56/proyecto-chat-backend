@@ -97,6 +97,8 @@ app.post('/api/login', async (req, res) => {
     }
 
     const hashedPassword = userDoc.hashedPassword;
+    console.log('hashedPassword: ' + hashedPassword);
+    console.log('Password: ' + password);
 
     bcrypt.compare(password, hashedPassword, (err, result) => {
       if (err) {
