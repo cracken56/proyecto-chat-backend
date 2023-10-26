@@ -163,7 +163,7 @@ app.put('/api/message', async (req, res) => {
 });
 
 app.post(
-  '/api/:user/contact/requests/send/:contactToRequest',
+  '/api/:user/contacts/requests/send/:contactToRequest',
   async (req, res) => {
     try {
       const { user, contactToRequest } = req.params;
@@ -242,7 +242,7 @@ const createConversation = async (participants, res, message) => {
 
 // This is called when the user accepts the request
 app.post(
-  '/api/:user/contact/requests/accept/:contactToAccept',
+  '/api/:user/contacts/requests/accept/:contactToAccept',
   async (req, res) => {
     try {
       const { user, contactToAccept } = req.params;
@@ -328,7 +328,7 @@ app.get('/api/:user/contacts', async (req, res) => {
   }
 });
 
-app.get('/api/:user/contact/requests', async (req, res) => {
+app.get('/api/:user/contacts/requests', async (req, res) => {
   try {
     const { user } = req.params;
 
