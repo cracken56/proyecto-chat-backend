@@ -114,7 +114,7 @@ const verifyToken = (req, res, next) => {
 // TODO: temporarily disabled for testing. When enabled, change req.body for req.payload on the endpoints
 //app.use(verifyToken);
 
-app.post('/api/message', async (req, res) => {
+app.put('/api/message', async (req, res) => {
   try {
     const { conversationId, message } = req.body;
 
@@ -150,7 +150,7 @@ app.post('/api/message', async (req, res) => {
     message.timestamp = new Date().getTime();
     conversationData.messages.push(message);
 
-    await conversationDocRef.set(conversationData);
+    await conversationDocRef.update(conversationData);
 
     res.status(200).json({
       success: true,
@@ -163,7 +163,7 @@ app.post('/api/message', async (req, res) => {
 });
 
 app.post(
-  '/api/:user/contact/request/send/:contactToRequest',
+  '/api/:user/contact/requests/send/:contactToRequest',
   async (req, res) => {
     try {
       const { user, contactToRequest } = req.params;
@@ -242,7 +242,7 @@ const createConversation = async (participants, res, message) => {
 
 // This is called when the user accepts the request
 app.post(
-  '/api/:user/contact/request/accept/:contactToAccept',
+  '/api/:user/contact/requests/accept/:contactToAccept',
   async (req, res) => {
     try {
       const { user, contactToAccept } = req.params;
