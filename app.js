@@ -96,9 +96,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(404).json({ error: 'User does not exist' });
     }
 
-    const hashedPassword = userDoc.hashedPassword;
-    console.log('hashedPassword: ' + hashedPassword);
-    console.log('Password: ' + password);
+    const hashedPassword = userDoc.data().hashedPassword;
 
     bcrypt.compare(password, hashedPassword, (err, result) => {
       if (err) {
