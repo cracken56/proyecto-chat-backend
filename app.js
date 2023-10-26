@@ -4,6 +4,7 @@ const cors = require('cors');
 const { Firestore } = require('@google-cloud/firestore');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 const bodyParser = require('body-parser'); // Add this line
+const bcrypt = require('bcrypt');
 
 // Initialize Firestore client
 const firestore = new Firestore();
@@ -85,7 +86,7 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
   try {
-    const { user, hashedPassword } = req.body;
+    const { user, password } = req.body;
 
     // Check if the username doesn't exist in Firestore
     const userRef = firestore.collection('users').doc(user);
@@ -95,9 +96,15 @@ app.post('/api/login', async (req, res) => {
       return res.status(404).json({ error: 'User does not exist' });
     }
 
-    if (userDoc.hashedPassword !== hashedPassword) {
-      return res.status(401).json({ error: 'Incorrect password' });
-    }
+    bcrypt.compare(password, hashedPassword, (err, result) => {
+      if (err) {
+        console.error('Error comparing passwords:', err);
+      } else if (result) {
+        console.log('Login successful');
+      } else {
+        return res.status(401).json({ error: 'Incorrect password' });
+      }
+    });
 
     let token;
 
