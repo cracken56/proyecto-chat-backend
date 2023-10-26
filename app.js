@@ -92,7 +92,7 @@ app.post('/api/login', async (req, res) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      return res.status(409).json({ error: 'User does not exist' });
+      return res.status(404).json({ error: 'User does not exist' });
     }
 
     let token;
