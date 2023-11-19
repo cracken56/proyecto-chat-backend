@@ -105,7 +105,7 @@ app.post('/api/login', async (req, res) => {
 
     res.status(200).json({ message: 'User logged in successfully' });
 
-    //TODO: temporarily disable auth
+    //TODO: temporarily disabled auth
     //const hashedPassword = userDoc.data().hashedPassword;
 
     // bcrypt.compare(password, hashedPassword, (err, result) => {
@@ -163,17 +163,18 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-//TODO: temporarily disable auth
+//TODO: temporarily disabled auth
 //app.use(verifyToken);
 
 app.put('/api/message', async (req, res) => {
   try {
     const { conversationId, message } = req.body;
 
-    const user = req.user;
-    if (message.sender !== user) {
-      return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    }
+    //TODO: temporarily disabled auth
+    // const userToken = req.user;
+    // if (message.sender !== userToken) {
+    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    // }
 
     const conversationDocRef = firestore
       .collection('conversations')
@@ -219,10 +220,11 @@ app.post(
     try {
       const { user, contactToRequest } = req.params;
 
-      const userToken = req.user;
-      if (user !== userToken) {
-        return res.status(401).json({ success: false, error: 'Unauthorized.' });
-      }
+      //TODO: temporarily disabled auth
+      // const userToken = req.user;
+      // if (user !== userToken) {
+      //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+      // }
 
       const userDocRef = firestore.collection('users').doc(contactToRequest);
 
@@ -297,10 +299,11 @@ app.post(
     try {
       const { user, contactToAccept } = req.params;
 
-      const userToken = req.user;
-      if (user !== userToken) {
-        return res.status(401).json({ success: false, error: 'Unauthorized.' });
-      }
+      //TODO: temporarily disabled auth
+      // const userToken = req.user;
+      // if (user !== userToken) {
+      //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+      // }
 
       const userDocRef = firestore.collection('users').doc(user);
       const contactDocRef = firestore.collection('users').doc(contactToAccept);
@@ -352,10 +355,11 @@ app.get('/api/:user/contacts', async (req, res) => {
   try {
     const { user } = req.params;
 
-    const userToken = req.user;
-    if (user !== userToken) {
-      return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    }
+    //TODO: temporarily disabled auth
+    // const userToken = req.user;
+    // if (user !== userToken) {
+    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    // }
 
     const userDocRef = firestore.collection('users').doc(user);
 
@@ -382,10 +386,11 @@ app.get('/api/:user/contacts/requests', async (req, res) => {
   try {
     const { user } = req.params;
 
-    const userToken = req.user;
-    if (user !== userToken) {
-      return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    }
+    //TODO: temporarily disabled auth
+    // const userToken = req.user;
+    // if (user !== userToken) {
+    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    // }
 
     const userDocRef = firestore.collection('users').doc(user);
 
