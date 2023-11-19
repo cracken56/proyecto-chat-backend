@@ -153,7 +153,7 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-app.use(verifyToken);
+//app.use(verifyToken);
 
 app.put('/api/message', async (req, res) => {
   try {
@@ -186,6 +186,7 @@ app.put('/api/message', async (req, res) => {
     if (!conversationData.messages) {
       conversationData.messages = [];
     }
+
     message.timestamp = new Date().getTime();
     conversationData.messages.push(message);
 
