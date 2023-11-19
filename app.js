@@ -59,25 +59,32 @@ app.post('/api/register', async (req, res) => {
       return res.status(409).json({ error: 'User already exists' });
     }
 
-    let token;
+    await userRef.set({
+      hashedPassword,
+    });
 
-    fetchSecretKey()
-      .then((secretKey) => {
-        return jwt.sign({ user, hashedPassword }, secretKey);
-      })
-      .then(async (token) => {
-        await userRef.set({
-          hashedPassword,
-        });
+    res.status(200).json({ message: 'User registered successfully' });
 
-        res
-          .status(200)
-          .json({ message: 'User registered successfully', token: token });
-      })
-      .catch((error) => {
-        console.error('Error fetching secret key:', error);
-        res.status(500).json({ error: 'Error fetching secret key' });
-      });
+    //TODO: temporarily disable auth
+    // let token;
+
+    // fetchSecretKey()
+    //   .then((secretKey) => {
+    //     return jwt.sign({ user, hashedPassword }, secretKey);
+    //   })
+    //   .then(async (token) => {
+    //     await userRef.set({
+    //       hashedPassword,
+    //     });
+
+    //     res
+    //       .status(200)
+    //       .json({ message: 'User registered successfully', token: token });
+    //   })
+    //   .catch((error) => {
+    //     console.error('Error fetching secret key:', error);
+    //     res.status(500).json({ error: 'Error fetching secret key' });
+    //   });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Error registering user' });
@@ -96,30 +103,33 @@ app.post('/api/login', async (req, res) => {
       return res.status(404).json({ error: 'User does not exist' });
     }
 
-    const hashedPassword = userDoc.data().hashedPassword;
+    res.status(200).json({ message: 'User logged in successfully' });
 
-    bcrypt.compare(password, hashedPassword, (err, result) => {
-      if (err) {
-        console.error('Error comparing passwords:', err);
-        res.status(500).json({ error: `Error comparing passwords: ${err}` });
-      } else if (result) {
-        fetchSecretKey()
-          .then((secretKey) => {
-            return jwt.sign({ user, hashedPassword }, secretKey);
-          })
-          .then((token) => {
-            res
-              .status(200)
-              .json({ message: 'User logged in successfully', token: token });
-          })
-          .catch((error) => {
-            console.error('Error fetching secret key:', error);
-            res.status(500).json({ error: 'Error fetching secret key' });
-          });
-      } else {
-        return res.status(401).json({ error: 'Incorrect password' });
-      }
-    });
+    //TODO: temporarily disable auth
+    //const hashedPassword = userDoc.data().hashedPassword;
+
+    // bcrypt.compare(password, hashedPassword, (err, result) => {
+    //   if (err) {
+    //     console.error('Error comparing passwords:', err);
+    //     res.status(500).json({ error: `Error comparing passwords: ${err}` });
+    //   } else if (result) {
+    //     fetchSecretKey()
+    //       .then((secretKey) => {
+    //         return jwt.sign({ user, hashedPassword }, secretKey);
+    //       })
+    //       .then((token) => {
+    //         res
+    //           .status(200)
+    //           .json({ message: 'User logged in successfully', token: token });
+    //       })
+    //       .catch((error) => {
+    //         console.error('Error fetching secret key:', error);
+    //         res.status(500).json({ error: 'Error fetching secret key' });
+    //       });
+    //   } else {
+    //     return res.status(401).json({ error: 'Incorrect password' });
+    //   }
+    // });
   } catch (error) {
     console.error('Error logging user:', error);
     res.status(500).json({ error: 'Error logging user' });
@@ -153,6 +163,7 @@ const verifyToken = (req, res, next) => {
     });
 };
 
+//TODO: temporarily disable auth
 //app.use(verifyToken);
 
 app.put('/api/message', async (req, res) => {
