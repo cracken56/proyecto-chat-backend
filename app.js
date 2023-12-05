@@ -280,14 +280,13 @@ const createConversation = async (participants, res, message) => {
     // Create a new conversation if none exists
     const conversationDoc = firestore.collection('conversations').doc();
     await conversationDoc.set({
-      conversationId: conversationDoc.id,
       participants,
     });
 
     res.status(201).json({
       success: true,
       message: `${message}, and conversation created successfully`,
-      conversation: { conversationId: conversationDoc.id, participants },
+      conversation: { conversationId: participants },
     });
   }
 };
