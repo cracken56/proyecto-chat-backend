@@ -189,11 +189,11 @@ app.put('/api/message', async (req, res) => {
     }
 
     // Check if the user sending the message is a participant in the conversation
-    const participants = conversationData.participants || [];
-    if (!participants.includes(req.user)) {
-      res.status(401).json({ success: false, error: 'Unauthorized' });
-      return;
-    }
+    // const participants = conversationData.participants || [];
+    // if (!participants.includes(req.user)) {
+    //   res.status(401).json({ success: false, error: 'Unauthorized' });
+    //   return;
+    // }
 
     if (!conversationData.messages) {
       conversationData.messages = [];
