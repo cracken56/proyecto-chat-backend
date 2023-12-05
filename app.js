@@ -286,7 +286,7 @@ const createConversation = async (participants, res, message) => {
     res.status(201).json({
       success: true,
       message: `${message}, and conversation created successfully`,
-      conversation: { conversationId: participants },
+      conversation: { participants },
     });
   }
 };
