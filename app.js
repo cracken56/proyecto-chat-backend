@@ -264,7 +264,7 @@ const createConversation = async (participants, res, message) => {
   const existingConversationQuery = firestore
     .collection('conversations')
     .where(`participants.${Object.values(participants)[0]}`, '==', true)
-    .where(`participants${Object.values(participants)[1]}`, '==', true)
+    .where(`participants.${Object.values(participants)[1]}`, '==', true)
     .get();
 
   // Check if any matching conversations exist
@@ -338,7 +338,7 @@ app.post(
       await contactDocRef.update({ contacts: contactContacts });
 
       createConversation(
-        { user: true, contactToAccept: true },
+        { [user]: true, [contactToAccept]: true },
         res,
         'Contact added successfully'
       );
