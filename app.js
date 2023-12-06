@@ -189,8 +189,8 @@ app.put('/api/message', async (req, res) => {
     }
 
     // Check if the user sending the message is a participant in the conversation
-    // const participants = conversationData.participants || [];
-    // if (!participants.includes(req.user)) {
+    // const participants = conversationData.participants || {};
+    // if (!participants.hasOwnProperty(reqUser)) {
     //   res.status(401).json({ success: false, error: 'Unauthorized' });
     //   return;
     // }
@@ -263,7 +263,8 @@ app.post(
 const createConversation = async (participants, res, message) => {
   const existingConversationQuery = firestore
     .collection('conversations')
-    .where('participants', 'array-contains', ...participants)
+    .where(`participants.${Object.values(participants)[0]}`, '==', true)
+    .where(`participants${Object.values(participants)[1]}`, '==', true)
     .get();
 
   // Check if any matching conversations exist
@@ -337,7 +338,7 @@ app.post(
       await contactDocRef.update({ contacts: contactContacts });
 
       createConversation(
-        [user, contactToAccept],
+        { user: true, contactToAccept: true },
         res,
         'Contact added successfully'
       );
