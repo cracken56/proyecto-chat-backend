@@ -214,6 +214,53 @@ app.put('/api/message', async (req, res) => {
   }
 });
 
+app.put('/api/typing', async (req, res) => {
+  try {
+    const { conversationId, user, typing } = req.body;
+
+    //TODO: temporarily disabled auth
+    // const userToken = req.user;
+    // if (user !== userToken) {
+    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    // }
+
+    const conversationDocRef = firestore
+      .collection('conversations')
+      .doc(conversationId);
+
+    const conversationDoc = await conversationDocRef.get();
+    const conversationData = conversationDoc.data();
+
+    if (!conversationData) {
+      res.status(404).json({ success: false, error: 'Conversation not found' });
+      return;
+    }
+
+    // Check if the user sending the typing status is a participant in the conversation
+    // const participants = conversationData.participants || {};
+    // if (!participants.hasOwnProperty(reqUser)) {
+    //   res.status(401).json({ success: false, error: 'Unauthorized' });
+    //   return;
+    // }
+
+    if (!conversationData.typing) {
+      conversationData.typing = {};
+    }
+
+    conversationData.typing[user] = typing;
+
+    await conversationDocRef.update(conversationData);
+
+    res.status(200).json({
+      success: true,
+      message: 'Typing status sent successfully',
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ success: false, error: 'Error sending message' });
+  }
+});
+
 app.post(
   '/api/:user/contacts/requests/send/:contactToRequest',
   async (req, res) => {
