@@ -216,7 +216,7 @@ app.put('/api/message', async (req, res) => {
 
 app.put('/api/typing', async (req, res) => {
   try {
-    const { conversationId, user, typing } = req.body;
+    const { conversationId, [user]: typing } = req.body;
 
     //TODO: temporarily disabled auth
     // const userToken = req.user;
