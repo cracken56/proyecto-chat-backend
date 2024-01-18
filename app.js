@@ -278,8 +278,10 @@ app.post(
       let userDoc = await userDocRef.get();
 
       if (!userDoc.exists) {
-        await userDocRef.set({ contactRequests: [] });
-        userDoc = await userDocRef.get();
+        res
+          .status(404)
+          .json({ success: false, error: 'Contact does not exist' });
+        return;
       }
 
       const existingContactRequests = userDoc.data().contactRequests || [];
