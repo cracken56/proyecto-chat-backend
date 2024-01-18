@@ -276,7 +276,7 @@ app.post(
       // Requests
       const contactDocRef = firestore.collection('users').doc(contactToRequest);
 
-      let contactDoc = await contactDocRef.get();
+      const contactDoc = await contactDocRef.get();
 
       if (!contactDoc.exists) {
         res
@@ -296,17 +296,17 @@ app.post(
 
       contactRequests.push(user);
 
-      await contactDocRef.update({ contactRequests });
+      await contactDocRef.update({ contactRequests: contactRequests });
 
       // Pending
       const userDocRef = firestore.collection('users').doc(user);
 
-      let userDoc = await userDocRef.get();
+      const userDoc = await userDocRef.get();
       const pendingRequests = userDoc.data().pendingRequests || [];
 
       pendingRequests.push(contactRequests);
 
-      await userDocRef.update({ pendingRequests });
+      await userDocRef.update({ pendingRequests: pendingRequests });
 
       res.status(200).json({
         success: true,
