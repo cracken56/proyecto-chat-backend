@@ -302,11 +302,11 @@ app.post(
       const userDocRef = firestore.collection('users').doc(user);
 
       const userDoc = await userDocRef.get();
-      const pendingRequests = userDoc.data().pendingRequests || [];
+      const sentRequests = userDoc.data().sentRequests || [];
 
-      pendingRequests.push(contactToRequest);
+      sentRequests.push(contactToRequest);
 
-      await userDocRef.update({ pendingRequests: pendingRequests });
+      await userDocRef.update({ sentRequests: sentRequests });
 
       res.status(200).json({
         success: true,
