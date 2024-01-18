@@ -273,34 +273,45 @@ app.post(
       //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
       // }
 
-      const userDocRef = firestore.collection('users').doc(contactToRequest);
+      // Requests
+      const contactDocRef = firestore.collection('users').doc(contactToRequest);
 
-      let userDoc = await userDocRef.get();
+      let contactDoc = await contactDocRef.get();
 
-      if (!userDoc.exists) {
+      if (!contactDoc.exists) {
         res
           .status(404)
           .json({ success: false, error: 'Contact does not exist' });
         return;
       }
 
-      const existingContactRequests = userDoc.data().contactRequests || [];
+      const contactRequests = contactDoc.data().contactRequests || [];
 
-      if (existingContactRequests.includes(user)) {
+      if (contactRequests.includes(user)) {
         res
           .status(409)
           .json({ success: false, error: 'Contact request already exists' });
         return;
       }
 
-      existingContactRequests.push(user);
+      contactRequests.push(user);
 
-      await userDocRef.update({ contactRequests: existingContactRequests });
+      await contactDocRef.update({ contactRequests });
+
+      // Pending
+      const userDocRef = firestore.collection('users').doc(user);
+
+      let userDoc = await userDocRef.get();
+      const pendingRequests = userDoc.data().pendingRequests || [];
+
+      pendingRequests.push(contactRequests);
+
+      await userDocRef.update({ pendingRequests });
 
       res.status(200).json({
         success: true,
         message: 'Contact requested successfully',
-        updatedContactRequests: existingContactRequests,
+        updatedContactRequests: contactRequests,
       });
     } catch (error) {
       console.error('Error adding contact:', error);
