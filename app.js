@@ -304,7 +304,7 @@ app.post(
       const userDoc = await userDocRef.get();
       const pendingRequests = userDoc.data().pendingRequests || [];
 
-      pendingRequests.push(contactRequests);
+      pendingRequests.push(contactToRequest);
 
       await userDocRef.update({ pendingRequests: pendingRequests });
 
