@@ -442,7 +442,7 @@ app.get('/api/:user/contacts', async (req, res) => {
   }
 });
 
-app.get('/api/:user/contacts/requests', async (req, res) => {
+app.get('/api/:user/contacts/pending-requests', async (req, res) => {
   try {
     const { user } = req.params;
 
@@ -468,7 +468,42 @@ app.get('/api/:user/contacts/requests', async (req, res) => {
       contactRequests,
     });
   } catch (error) {
-    console.error('Error fetching contacts:', error);
-    res.status(500).json({ success: false, error: 'Error fetching contacts' });
+    console.error('Error fetching pending requests:', error);
+    res
+      .status(500)
+      .json({ success: false, error: 'Error fetching pending requests' });
+  }
+});
+
+app.get('/api/:user/contacts/sent-requests', async (req, res) => {
+  try {
+    const { user } = req.params;
+
+    //TODO: temporarily disabled auth
+    // const userToken = req.user;
+    // if (user !== userToken) {
+    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    // }
+
+    const userDocRef = firestore.collection('users').doc(user);
+
+    const userDoc = await userDocRef.get();
+
+    if (!userDoc.exists) {
+      res.status(404).json({ success: false, error: `User not found` });
+      return;
+    }
+
+    const sentRequests = userDoc.data().sentRequests || [];
+
+    res.status(200).json({
+      success: true,
+      sentRequests,
+    });
+  } catch (error) {
+    console.error('Error fetching sent requests:', error);
+    res
+      .status(500)
+      .json({ success: false, error: 'Error fetching sent requests' });
   }
 });
