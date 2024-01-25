@@ -416,7 +416,7 @@ app.post(
 );
 
 app.post(
-  '/api/:user/contacts/requests/decline/:contactToAccept',
+  '/api/:user/contacts/requests/decline/:contactToDecline',
   async (req, res) => {
     try {
       const { user, contactToDecline } = req.params;
@@ -466,12 +466,10 @@ app.post(
         sentRequests: updatedSentRequests,
       });
 
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: `${user} declined ${contactToDecline}'s contact request.`,
-        });
+      res.status(200).json({
+        success: true,
+        message: `${user} declined ${contactToDecline}'s contact request.`,
+      });
     } catch (error) {
       console.error('Error declining contact request:', error);
       res
