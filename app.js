@@ -184,7 +184,9 @@ app.put('/api/message', async (req, res) => {
     const conversationData = conversationDoc.data();
 
     if (!conversationData) {
-      res.status(404).json({ success: false, message: 'Conversation not found' });
+      res
+        .status(404)
+        .json({ success: false, message: 'Conversation not found' });
       return;
     }
 
@@ -232,7 +234,9 @@ app.put('/api/typing', async (req, res) => {
     const conversationData = conversationDoc.data();
 
     if (!conversationData) {
-      res.status(404).json({ success: false, message: 'Conversation not found' });
+      res
+        .status(404)
+        .json({ success: false, message: 'Conversation not found' });
       return;
     }
 
@@ -461,9 +465,18 @@ app.post(
       await contactDocRef.update({
         sentRequests: updatedSentRequests,
       });
+
+      res
+        .status(200)
+        .json({
+          success: true,
+          message: `${user} declined ${contactToDecline}'s contact request.`,
+        });
     } catch (error) {
       console.error('Error declining contact request:', error);
-      res.status(500).json({ success: false, message: 'Error declining contact request' });
+      res
+        .status(500)
+        .json({ success: false, message: 'Error declining contact request' });
     }
   }
 );
@@ -495,7 +508,9 @@ app.get('/api/:user/contacts', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching contacts:', error);
-    res.status(500).json({ success: false, message: 'Error fetching contacts' });
+    res
+      .status(500)
+      .json({ success: false, message: 'Error fetching contacts' });
   }
 });
 
