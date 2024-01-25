@@ -457,7 +457,7 @@ app.post(
       });
 
       // Delete from contact's sentRequests
-      const contactSentRequests = contactDocRef.data().sentRequests || [];
+      const contactSentRequests = contactDoc.data().sentRequests || [];
       const updatedSentRequests = contactSentRequests.filter(
         (request) => request !== user
       );
