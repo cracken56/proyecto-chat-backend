@@ -395,7 +395,13 @@ app.post(
         contacts: userContacts,
         contactRequests: updatedUserRequests,
       });
-      await contactDocRef.update({ contacts: contactContacts });
+
+      const contactSentRequests = contactDoc.data().sentRequests || [];
+      const updatedSentRequests = contactSentRequests.filter(
+        (request) => request !== user
+      );
+
+      await contactDocRef.update({ sentRequests: updatedSentRequests, contacts: contactContacts });
 
       createConversation(
         { [user]: true, [contactToAccept]: true },
