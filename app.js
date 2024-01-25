@@ -56,7 +56,7 @@ app.post('/api/register', async (req, res) => {
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
-      return res.status(409).json({ error: 'User already exists' });
+      return res.status(409).json({ message: 'User already exists' });
     }
 
     await userRef.set({
@@ -87,7 +87,7 @@ app.post('/api/register', async (req, res) => {
     //   });
   } catch (error) {
     console.error('Error registering user:', error);
-    res.status(500).json({ error: 'Error registering user' });
+    res.status(500).json({ message: 'Error registering user' });
   }
 });
 
@@ -100,7 +100,7 @@ app.post('/api/login', async (req, res) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      return res.status(404).json({ error: 'User does not exist' });
+      return res.status(404).json({ message: 'User does not exist' });
     }
 
     res.status(200).json({ message: 'User logged in successfully' });
@@ -132,7 +132,7 @@ app.post('/api/login', async (req, res) => {
     // });
   } catch (error) {
     console.error('Error logging user:', error);
-    res.status(500).json({ error: 'Error logging user' });
+    res.status(500).json({ message: 'Error logging user' });
   }
 });
 
@@ -159,7 +159,7 @@ const verifyToken = (req, res, next) => {
     })
     .catch((error) => {
       console.error('Error fetching secret key:', error);
-      res.status(500).json({ error: 'Error fetching secret key' });
+      res.status(500).json({ message: 'Error fetching secret key' });
     });
 };
 
@@ -184,7 +184,7 @@ app.put('/api/message', async (req, res) => {
     const conversationData = conversationDoc.data();
 
     if (!conversationData) {
-      res.status(404).json({ success: false, error: 'Conversation not found' });
+      res.status(404).json({ success: false, message: 'Conversation not found' });
       return;
     }
 
@@ -210,7 +210,7 @@ app.put('/api/message', async (req, res) => {
     });
   } catch (error) {
     console.error('Error sending message:', error);
-    res.status(500).json({ success: false, error: 'Error sending message' });
+    res.status(500).json({ success: false, message: 'Error sending message' });
   }
 });
 
@@ -232,7 +232,7 @@ app.put('/api/typing', async (req, res) => {
     const conversationData = conversationDoc.data();
 
     if (!conversationData) {
-      res.status(404).json({ success: false, error: 'Conversation not found' });
+      res.status(404).json({ success: false, message: 'Conversation not found' });
       return;
     }
 
@@ -257,7 +257,7 @@ app.put('/api/typing', async (req, res) => {
     });
   } catch (error) {
     console.error('Error sending message:', error);
-    res.status(500).json({ success: false, error: 'Error sending message' });
+    res.status(500).json({ success: false, message: 'Error sending message' });
   }
 });
 
@@ -281,7 +281,7 @@ app.post(
       if (!contactDoc.exists) {
         res
           .status(404)
-          .json({ success: false, error: 'Contact does not exist' });
+          .json({ success: false, message: 'Contact does not exist' });
         return;
       }
 
@@ -290,7 +290,7 @@ app.post(
       if (contactRequests.includes(user)) {
         res
           .status(409)
-          .json({ success: false, error: 'Contact request already exists' });
+          .json({ success: false, message: 'Contact request already exists' });
         return;
       }
 
@@ -315,7 +315,7 @@ app.post(
       });
     } catch (error) {
       console.error('Error adding contact:', error);
-      res.status(500).json({ success: false, error: 'Error adding contact' });
+      res.status(500).json({ success: false, message: 'Error adding contact' });
     }
   }
 );
@@ -404,12 +404,69 @@ app.post(
       );
     } catch (error) {
       console.error('Error adding contact:', error);
-      res.status(500).json({ success: false, error: 'Error adding contact' });
+      res
+        .status(500)
+        .json({ success: false, message: 'Error accepting contact request' });
     }
   }
 );
 
-//TODO: create endpoint to allow denying contact requests
+app.post(
+  '/api/:user/contacts/requests/decline/:contactToAccept',
+  async (req, res) => {
+    try {
+      const { user, contactToDecline } = req.params;
+
+      //TODO: temporarily disabled auth
+      // const userToken = req.user;
+      // if (user !== userToken) {
+      //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
+      // }
+
+      const userDocRef = firestore.collection('users').doc(user);
+      const contactDocRef = firestore.collection('users').doc(contactToDecline);
+
+      let userDoc = await userDocRef.get();
+      if (!userDoc.exists) {
+        res.status(404).json({
+          success: false,
+          message: `${user} could not be found`,
+        });
+      }
+
+      let contactDoc = await contactDocRef.get();
+      if (!contactDoc.exists) {
+        res.status(404).json({
+          success: false,
+          message: `${user} could not be found`,
+        });
+      }
+
+      // Delete from user's contactRequests
+      const userRequests = userDoc.data().contactRequests || [];
+      const updatedUserRequests = userRequests.filter(
+        (contact) => contact !== contactToDecline
+      );
+
+      await userDocRef.update({
+        contactRequests: updatedUserRequests,
+      });
+
+      // Delete from contact's sentRequests
+      const contactSentRequests = contactDocRef.data().sentRequests || [];
+      const updatedSentRequests = contactSentRequests.filter(
+        (request) => request !== user
+      );
+
+      await contactDocRef.update({
+        sentRequests: updatedSentRequests,
+      });
+    } catch (error) {
+      console.error('Error declining contact request:', error);
+      res.status(500).json({ success: false, message: 'Error declining contact request' });
+    }
+  }
+);
 
 app.get('/api/:user/contacts', async (req, res) => {
   try {
@@ -426,7 +483,7 @@ app.get('/api/:user/contacts', async (req, res) => {
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      res.status(404).json({ success: false, error: `User not found` });
+      res.status(404).json({ success: false, message: `User not found` });
       return;
     }
 
@@ -438,7 +495,7 @@ app.get('/api/:user/contacts', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching contacts:', error);
-    res.status(500).json({ success: false, error: 'Error fetching contacts' });
+    res.status(500).json({ success: false, message: 'Error fetching contacts' });
   }
 });
 
@@ -457,7 +514,7 @@ app.get('/api/:user/contacts/pending-requests', async (req, res) => {
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      res.status(404).json({ success: false, error: `User not found` });
+      res.status(404).json({ success: false, message: `User not found` });
       return;
     }
 
@@ -490,7 +547,7 @@ app.get('/api/:user/contacts/sent-requests', async (req, res) => {
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
-      res.status(404).json({ success: false, error: `User not found` });
+      res.status(404).json({ success: false, message: `User not found` });
       return;
     }
 
@@ -504,6 +561,6 @@ app.get('/api/:user/contacts/sent-requests', async (req, res) => {
     console.error('Error fetching sent requests:', error);
     res
       .status(500)
-      .json({ success: false, error: 'Error fetching sent requests' });
+      .json({ success: false, message: 'Error fetching sent requests' });
   }
 });
