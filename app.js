@@ -273,6 +273,13 @@ app.post(
       //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
       // }
 
+      if (user === contactToRequest) {
+        res
+          .status(400)
+          .json({ success: false, error: 'Can not add yourself.' });
+        return;
+      }
+
       // Requests
       const contactDocRef = firestore.collection('users').doc(contactToRequest);
 
@@ -401,7 +408,10 @@ app.post(
         (request) => request !== user
       );
 
-      await contactDocRef.update({ sentRequests: updatedSentRequests, contacts: contactContacts });
+      await contactDocRef.update({
+        sentRequests: updatedSentRequests,
+        contacts: contactContacts,
+      });
 
       createConversation(
         { [user]: true, [contactToAccept]: true },
