@@ -168,7 +168,7 @@ const verifyToken = (req, res, next) => {
 
 app.put('/api/message', async (req, res) => {
   try {
-    const { conversationId, message } = req.body;
+    const { conversationId, message, updateRead } = req.body;
 
     //TODO: temporarily disabled auth
     // const userToken = req.user;
@@ -199,15 +199,41 @@ app.put('/api/message', async (req, res) => {
       conversationData.messages = [];
     }
 
-    message.timestamp = new Date().getTime();
-    conversationData.messages.push(message);
+    if (updateRead) {
+      const messageIndex = conversationData.messages.findIndex(
+        (message) => message.timestamp === updateRead.timestamp
+      );
 
-    await conversationDocRef.update(conversationData);
+      if (messageIndex !== -1) {
+        conversationData.messages[messageIndex].readBy[
+          updateRead.reader
+        ] = true;
 
-    res.status(200).json({
-      success: true,
-      message: 'Message sent successfully',
-    });
+        await conversationDocRef.update(conversationData);
+
+        return res.status(200).json({
+          success: true,
+          message: 'Message readBy updated successfully',
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          error: 'Message could not be found',
+        });
+      }
+    }
+
+    if (message) {
+      message.timestamp = new Date().getTime();
+      conversationData.messages.push(message);
+
+      await conversationDocRef.update(conversationData);
+
+      res.status(200).json({
+        success: true,
+        message: 'Message sent successfully',
+      });
+    }
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ success: false, error: 'Error sending message' });
