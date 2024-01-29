@@ -215,11 +215,6 @@ app.put('/api/message', async (req, res) => {
           success: true,
           message: 'Message readBy updated successfully',
         });
-      } else {
-        return res.status(404).json({
-          success: false,
-          error: 'Message could not be found',
-        });
       }
     }
 
