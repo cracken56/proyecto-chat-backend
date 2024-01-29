@@ -200,9 +200,13 @@ app.put('/api/message', async (req, res) => {
     }
 
     if (updateRead) {
+      console.log(JSON.stringify(updateRead));
+
       const messageIndex = conversationData.messages.findIndex(
         (message) => message.timestamp === updateRead.timestamp
       );
+
+      console.log('Message index: ' + messageIndex);
 
       if (messageIndex !== -1) {
         conversationData.messages[messageIndex].readBy[
@@ -214,6 +218,11 @@ app.put('/api/message', async (req, res) => {
         return res.status(200).json({
           success: true,
           message: 'Message readBy updated successfully',
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          error: 'Message could not be found',
         });
       }
     }
