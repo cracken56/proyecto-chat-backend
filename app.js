@@ -199,33 +199,34 @@ app.put('/api/message', async (req, res) => {
       conversationData.messages = [];
     }
 
-if (updateRead) {
-  let firstUnreadMessage;
-  const filteredMessages = conversationData.messages.filter((message) => {
-    return !message.readBy || !message.readBy[updateRead.reader];
-  });
+    if (updateRead) {
+      const filteredMessages = conversationData.messages.filter((message) => {
+        return !message.readBy || !message.readBy[updateRead.reader];
+      });
+      const firstUnreadMessage = filteredMessages[0].timestamp;
 
-  const updatedMessages = filteredMessages.map((message, index) => {
-    if (message.readBy) {
-      message.readBy = {
-        ...message.readBy,
-        [updateRead.reader]: true,
-      };
-    } else {
-      message.readBy = { [updateRead.reader]: true };
+      const updatedMessages = conversationData.messages.map(
+        (message, index) => {
+          if (message.readBy) {
+            message.readBy = {
+              ...message.readBy,
+              [updateRead.reader]: true,
+            };
+          } else {
+            message.readBy = { [updateRead.reader]: true };
+          }
+          return message;
+        }
+      );
+
+      await conversationDocRef.update({ messages: updatedMessages });
+
+      return res.status(200).json({
+        success: true,
+        firstUnreadMessage,
+        message: 'Messages readBy updated successfully',
+      });
     }
-    if (index === 0) firstUnreadMessage = message.timestamp;
-    return message;
-  });
-
-  await conversationDocRef.update({ messages: updatedMessages });
-
-  return res.status(200).json({
-    success: true,
-    firstUnreadMessage,
-    message: 'Messages readBy updated successfully',
-  });
-}
 
     if (message) {
       message.timestamp = new Date().getTime();
