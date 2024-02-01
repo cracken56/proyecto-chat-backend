@@ -200,31 +200,24 @@ app.put('/api/message', async (req, res) => {
     }
 
     if (updateRead) {
-      console.log(JSON.stringify(updateRead));
+      const updatedMessages = conversationData.messages.map((message) => {
+        if (message.readBy) {
+          message.readBy = {
+            ...message.readBy,
+            [updateRead.reader]: true,
+          };
+        } else {
+          message.readBy = { [updateRead.reader]: true };
+        }
+        return message;
+      });
 
-      const messageIndex = conversationData.messages.findIndex(
-        (message) => message.timestamp === updateRead.timestamp
-      );
+      await conversationDocRef.update({ messages: updatedMessages });
 
-      console.log('Message index: ' + messageIndex);
-
-      if (messageIndex !== -1) {
-        conversationData.messages[messageIndex].readBy[
-          updateRead.reader
-        ] = true;
-
-        await conversationDocRef.update(conversationData);
-
-        return res.status(200).json({
-          success: true,
-          message: 'Message readBy updated successfully',
-        });
-      } else {
-        return res.status(404).json({
-          success: false,
-          error: 'Message could not be found',
-        });
-      }
+      return res.status(200).json({
+        success: true,
+        message: 'Messages readBy updated successfully',
+      });
     }
 
     if (message) {
