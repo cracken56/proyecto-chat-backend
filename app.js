@@ -200,11 +200,6 @@ app.put('/api/message', async (req, res) => {
     }
 
     if (updateRead) {
-      const filteredMessages = conversationData.messages.filter((message) => {
-        return !message.readBy || !message.readBy[updateRead.reader];
-      });
-      const firstUnreadMessage = filteredMessages[0].timestamp;
-
       const updatedMessages = conversationData.messages.map(
         (message, index) => {
           if (message.readBy) {
@@ -223,7 +218,6 @@ app.put('/api/message', async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        firstUnreadMessage,
         message: 'Messages readBy updated successfully',
       });
     }
