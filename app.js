@@ -144,7 +144,6 @@ const verifyToken = (req, res, next) => {
           return res.status(401).json({ error: 'Token is invalid' });
         }
 
-        console.log(decoded);
         req.user = decoded.user;
         next();
       });
@@ -234,6 +233,7 @@ app.put('/api/typing', async (req, res) => {
     const { conversationId, user, typing } = req.body;
 
     const userToken = req.user;
+    console.log(userToken);
     if (user !== userToken) {
       return res.status(401).json({ success: false, error: 'Unauthorized.' });
     }
