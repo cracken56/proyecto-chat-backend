@@ -63,8 +63,6 @@ app.post('/api/register', async (req, res) => {
       hashedPassword,
     });
 
-    res.status(200).json({ message: 'User registered successfully' });
-
     fetchSecretKey()
       .then((secretKey) => {
         return jwt.sign({ user, hashedPassword }, secretKey);
@@ -539,7 +537,7 @@ app.get('/api/:user/contacts', async (req, res) => {
 app.get('/api/:user/contacts/pending-requests', async (req, res) => {
   try {
     const { user } = req.params;
-    
+
     const userToken = req.user;
     if (user !== userToken) {
       return res.status(401).json({ success: false, error: 'Unauthorized.' });
