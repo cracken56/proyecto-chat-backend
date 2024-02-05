@@ -144,9 +144,9 @@ const verifyToken = (req, res, next) => {
           return res.status(401).json({ error: 'Token is invalid' });
         }
 
-        // If the token is valid, you can attach the decoded payload to the request object
+        console.log(decoded);
         req.user = decoded.user;
-        next(); // Continue to the next middleware or route handler
+        next();
       });
     })
     .catch((error) => {
