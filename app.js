@@ -65,26 +65,23 @@ app.post('/api/register', async (req, res) => {
 
     res.status(200).json({ message: 'User registered successfully' });
 
-    //TODO: temporarily disable auth
-    // let token;
+    fetchSecretKey()
+      .then((secretKey) => {
+        return jwt.sign({ user, hashedPassword }, secretKey);
+      })
+      .then(async (token) => {
+        await userRef.set({
+          hashedPassword,
+        });
 
-    // fetchSecretKey()
-    //   .then((secretKey) => {
-    //     return jwt.sign({ user, hashedPassword }, secretKey);
-    //   })
-    //   .then(async (token) => {
-    //     await userRef.set({
-    //       hashedPassword,
-    //     });
-
-    //     res
-    //       .status(200)
-    //       .json({ message: 'User registered successfully', token: token });
-    //   })
-    //   .catch((error) => {
-    //     console.error('Error fetching secret key:', error);
-    //     res.status(500).json({ error: 'Error fetching secret key' });
-    //   });
+        res
+          .status(200)
+          .json({ message: 'User registered successfully', token: token });
+      })
+      .catch((error) => {
+        console.error('Error fetching secret key:', error);
+        res.status(500).json({ error: 'Error fetching secret key' });
+      });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Error registering user' });
@@ -105,31 +102,30 @@ app.post('/api/login', async (req, res) => {
 
     res.status(200).json({ message: 'User logged in successfully' });
 
-    //TODO: temporarily disabled auth
-    //const hashedPassword = userDoc.data().hashedPassword;
+    const hashedPassword = userDoc.data().hashedPassword;
 
-    // bcrypt.compare(password, hashedPassword, (err, result) => {
-    //   if (err) {
-    //     console.error('Error comparing passwords:', err);
-    //     res.status(500).json({ error: `Error comparing passwords: ${err}` });
-    //   } else if (result) {
-    //     fetchSecretKey()
-    //       .then((secretKey) => {
-    //         return jwt.sign({ user, hashedPassword }, secretKey);
-    //       })
-    //       .then((token) => {
-    //         res
-    //           .status(200)
-    //           .json({ message: 'User logged in successfully', token: token });
-    //       })
-    //       .catch((error) => {
-    //         console.error('Error fetching secret key:', error);
-    //         res.status(500).json({ error: 'Error fetching secret key' });
-    //       });
-    //   } else {
-    //     return res.status(401).json({ error: 'Incorrect password' });
-    //   }
-    // });
+    bcrypt.compare(password, hashedPassword, (err, result) => {
+      if (err) {
+        console.error('Error comparing passwords:', err);
+        res.status(500).json({ error: `Error comparing passwords: ${err}` });
+      } else if (result) {
+        fetchSecretKey()
+          .then((secretKey) => {
+            return jwt.sign({ user, hashedPassword }, secretKey);
+          })
+          .then((token) => {
+            res
+              .status(200)
+              .json({ message: 'User logged in successfully', token: token });
+          })
+          .catch((error) => {
+            console.error('Error fetching secret key:', error);
+            res.status(500).json({ error: 'Error fetching secret key' });
+          });
+      } else {
+        return res.status(401).json({ error: 'Incorrect password' });
+      }
+    });
   } catch (error) {
     console.error('Error logging user:', error);
     res.status(500).json({ error: 'Error logging user' });
@@ -163,18 +159,16 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-//TODO: temporarily disabled auth
-//app.use(verifyToken);
+app.use(verifyToken);
 
 app.put('/api/message', async (req, res) => {
   try {
     const { conversationId, message, updateRead } = req.body;
 
-    //TODO: temporarily disabled auth
-    // const userToken = req.user;
-    // if (message.sender !== userToken) {
-    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const userToken = req.user;
+    if (message.sender !== userToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const conversationDocRef = firestore
       .collection('conversations')
@@ -188,12 +182,12 @@ app.put('/api/message', async (req, res) => {
       return;
     }
 
-    // Check if the user sending the message is a participant in the conversation
-    // const participants = conversationData.participants || {};
-    // if (!participants.hasOwnProperty(reqUser)) {
-    //   res.status(401).json({ success: false, error: 'Unauthorized' });
-    //   return;
-    // }
+    // Check if the user sending the typing status is a participant in the conversation
+    const participants = conversationData.participants || {};
+    if (!participants.hasOwnProperty(reqUser)) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
 
     if (!conversationData.messages) {
       conversationData.messages = [];
@@ -243,11 +237,10 @@ app.put('/api/typing', async (req, res) => {
   try {
     const { conversationId, user, typing } = req.body;
 
-    //TODO: temporarily disabled auth
-    // const userToken = req.user;
-    // if (user !== userToken) {
-    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const userToken = req.user;
+    if (user !== userToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const conversationDocRef = firestore
       .collection('conversations')
@@ -262,11 +255,11 @@ app.put('/api/typing', async (req, res) => {
     }
 
     // Check if the user sending the typing status is a participant in the conversation
-    // const participants = conversationData.participants || {};
-    // if (!participants.hasOwnProperty(reqUser)) {
-    //   res.status(401).json({ success: false, error: 'Unauthorized' });
-    //   return;
-    // }
+    const participants = conversationData.participants || {};
+    if (!participants.hasOwnProperty(reqUser)) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
 
     if (!conversationData.typing) {
       conversationData.typing = {};
@@ -292,11 +285,10 @@ app.post(
     try {
       const { user, contactToRequest } = req.params;
 
-      //TODO: temporarily disabled auth
-      // const userToken = req.user;
-      // if (user !== userToken) {
-      //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-      // }
+      const userToken = req.user;
+      if (user !== userToken) {
+        return res.status(401).json({ success: false, error: 'Unauthorized.' });
+      }
 
       if (user === contactToRequest) {
         res
@@ -391,11 +383,10 @@ app.post(
     try {
       const { user, contactToAccept } = req.params;
 
-      //TODO: temporarily disabled auth
-      // const userToken = req.user;
-      // if (user !== userToken) {
-      //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-      // }
+      const userToken = req.user;
+      if (user !== userToken) {
+        return res.status(401).json({ success: false, error: 'Unauthorized.' });
+      }
 
       const userDocRef = firestore.collection('users').doc(user);
       const contactDocRef = firestore.collection('users').doc(contactToAccept);
@@ -458,11 +449,10 @@ app.post(
     try {
       const { user, contactToDecline } = req.params;
 
-      //TODO: temporarily disabled auth
-      // const userToken = req.user;
-      // if (user !== userToken) {
-      //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-      // }
+      const userToken = req.user;
+      if (user !== userToken) {
+        return res.status(401).json({ success: false, error: 'Unauthorized.' });
+      }
 
       const userDocRef = firestore.collection('users').doc(user);
       const contactDocRef = firestore.collection('users').doc(contactToDecline);
@@ -520,11 +510,10 @@ app.get('/api/:user/contacts', async (req, res) => {
   try {
     const { user } = req.params;
 
-    //TODO: temporarily disabled auth
-    // const userToken = req.user;
-    // if (user !== userToken) {
-    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const userToken = req.user;
+    if (user !== userToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const userDocRef = firestore.collection('users').doc(user);
 
@@ -550,12 +539,11 @@ app.get('/api/:user/contacts', async (req, res) => {
 app.get('/api/:user/contacts/pending-requests', async (req, res) => {
   try {
     const { user } = req.params;
-
-    //TODO: temporarily disabled auth
-    // const userToken = req.user;
-    // if (user !== userToken) {
-    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    // }
+    
+    const userToken = req.user;
+    if (user !== userToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const userDocRef = firestore.collection('users').doc(user);
 
@@ -584,11 +572,10 @@ app.get('/api/:user/contacts/sent-requests', async (req, res) => {
   try {
     const { user } = req.params;
 
-    //TODO: temporarily disabled auth
-    // const userToken = req.user;
-    // if (user !== userToken) {
-    //   return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    // }
+    const userToken = req.user;
+    if (user !== userToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized.' });
+    }
 
     const userDocRef = firestore.collection('users').doc(user);
 
