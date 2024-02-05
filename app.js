@@ -41,7 +41,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(), bodyParser.json());
+app.use(cors(corsOptions), bodyParser.json());
 
 app.get('/api/health', async (req, res) => {
   res.status(200).send();
