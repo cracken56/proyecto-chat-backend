@@ -106,8 +106,6 @@ app.post('/api/login', async (req, res) => {
             return jwt.sign({ user, hashedPassword }, secretKey);
           })
           .then((token) => {
-            console.log('Token: ' + token);
-
             res
               .status(200)
               .json({ message: 'User logged in successfully', token: token });
@@ -127,8 +125,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization;
-  console.log('Token: ' + token);
+  const token = req.headers.authorization.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ error: 'Token is missing' });
