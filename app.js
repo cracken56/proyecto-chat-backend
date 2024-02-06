@@ -38,6 +38,8 @@ server.headersTimeout = 120 * 1000;
 
 const corsOptions = {
   origin: 'https://proyecto-chat.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions), bodyParser.json());
