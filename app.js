@@ -38,7 +38,6 @@ server.headersTimeout = 120 * 1000;
 
 const corsOptions = {
   origin: 'https://proyecto-chat.onrender.com',
-  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions), bodyParser.json());
@@ -51,17 +50,12 @@ app.post('/api/register', async (req, res) => {
   try {
     const { user, hashedPassword } = req.body;
 
-    // Check if the username already exists in Firestore
     const userRef = firestore.collection('users').doc(user);
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
       return res.status(409).json({ error: 'User already exists' });
     }
-
-    await userRef.set({
-      hashedPassword,
-    });
 
     fetchSecretKey()
       .then((secretKey) => {
@@ -128,7 +122,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Define a function to create the middleware
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization;
 
@@ -154,7 +147,7 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-app.use(verifyToken);
+app.use(verifyToken());
 
 app.put('/api/message', async (req, res) => {
   try {
@@ -282,7 +275,6 @@ app.post(
       const { user, contactToRequest } = req.params;
 
       const userToken = req.user;
-      console.log(userToken);
       if (user !== userToken) {
         return res.status(401).json({ success: false, error: 'Unauthorized.' });
       }
