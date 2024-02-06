@@ -149,7 +149,7 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-app.use(verifyToken());
+app.use(verifyToken);
 
 app.put('/api/message', async (req, res) => {
   try {
