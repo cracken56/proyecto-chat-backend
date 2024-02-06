@@ -156,7 +156,12 @@ app.put('/api/message', async (req, res) => {
     const { conversationId, message, updateRead } = req.body;
 
     const userToken = req.user;
-    if (message.sender !== userToken) {
+
+    const unauthorized = message
+      ? message.sender !== userToken
+      : updateRead.reader !== userToken;
+
+    if (unauthorized) {
       return res.status(401).json({ success: false, error: 'Unauthorized.' });
     }
 
@@ -174,7 +179,9 @@ app.put('/api/message', async (req, res) => {
 
     // Check if the user sending the typing status is a participant in the conversation
     const participants = conversationData.participants || {};
-    if (!participants.hasOwnProperty(user)) {
+    if (
+      !participants.hasOwnProperty(message ? message.sender : updateRead.reader)
+    ) {
       res.status(401).json({ success: false, error: 'Unauthorized' });
       return;
     }
