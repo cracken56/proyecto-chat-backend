@@ -136,7 +136,7 @@ const verifyToken = (req, res, next) => {
     .then((secretKey) => {
       jwt.verify(token, secretKey, (err, decoded) => {
         if (err) {
-          return res.status(401).json({ error: 'Token is invalid' });
+          return res.status(401).json({ error: err });
         }
 
         req.user = decoded.user;
