@@ -106,6 +106,8 @@ app.post('/api/login', async (req, res) => {
             return jwt.sign({ user, hashedPassword }, secretKey);
           })
           .then((token) => {
+            console.log('Token: ' + token);
+
             res
               .status(200)
               .json({ message: 'User logged in successfully', token: token });
@@ -126,17 +128,18 @@ app.post('/api/login', async (req, res) => {
 
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization;
+  console.log('Token: ' + token);
 
   if (!token) {
     return res.status(401).json({ error: 'Token is missing' });
   }
 
-  // Verify the token with your secret key
   fetchSecretKey()
     .then((secretKey) => {
       jwt.verify(token, secretKey, (err, decoded) => {
         if (err) {
-          return res.status(401).json({ error: err });
+          console.error('Error verifying token:', err);
+          return res.status(401).json({ error: 'Token is invalid' });
         }
 
         req.user = decoded.user;
@@ -145,7 +148,7 @@ const verifyToken = (req, res, next) => {
     })
     .catch((error) => {
       console.error('Error fetching secret key:', error);
-      res.status(500).json({ error: 'Error fetching secret key' });
+      res.status(500).json({ error: 'Error verifying token' });
     });
 };
 
