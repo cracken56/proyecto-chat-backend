@@ -512,33 +512,3 @@ app.post(
     }
   }
 );
-
-app.get('/api/:user/contacts', async (req, res) => {
-  try {
-    const { user } = req.params;
-
-    const userToken = req.user;
-    if (user !== userToken) {
-      return res.status(401).json({ success: false, error: 'Unauthorized.' });
-    }
-
-    const userDocRef = firestore.collection('users').doc(user);
-
-    const userDoc = await userDocRef.get();
-
-    if (!userDoc.exists) {
-      res.status(404).json({ success: false, error: `User not found` });
-      return;
-    }
-
-    const contacts = userDoc.data().contacts || [];
-
-    res.status(200).json({
-      success: true,
-      contacts,
-    });
-  } catch (error) {
-    console.error('Error fetching contacts:', error);
-    res.status(500).json({ success: false, error: 'Error fetching contacts' });
-  }
-});
