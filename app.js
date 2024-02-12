@@ -316,6 +316,15 @@ app.post(
         return;
       }
 
+      const contactSentRequests = contactDoc.data().sentRequests || [];
+
+      if (contactSentRequests.includes(user)) {
+        res
+          .status(401)
+          .json({ success: false, error: 'Contact already sent a request' });
+        return;
+      }
+
       contactRequests.push(user);
 
       await contactDocRef.update({ contactRequests: contactRequests });
