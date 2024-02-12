@@ -312,16 +312,17 @@ app.post(
       if (contactRequests.includes(user)) {
         res
           .status(409)
-          .json({ success: false, error: 'Contact request already exists' });
+          .json({ success: false, error: 'Ya está en contactos.' });
         return;
       }
 
       const contactSentRequests = contactDoc.data().sentRequests || [];
 
       if (contactSentRequests.includes(user)) {
-        res
-          .status(409)
-          .json({ success: false, error: 'Contact already sent a request' });
+        res.status(409).json({
+          success: false,
+          error: 'El usuario ya te ha mandado una solicitud de contacto.',
+        });
         return;
       }
 
