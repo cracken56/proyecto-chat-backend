@@ -320,7 +320,7 @@ app.post(
 
       if (contactSentRequests.includes(user)) {
         res
-          .status(401)
+          .status(409)
           .json({ success: false, error: 'Contact already sent a request' });
         return;
       }
