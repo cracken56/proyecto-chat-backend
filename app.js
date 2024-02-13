@@ -384,7 +384,6 @@ const createConversation = async (participants, res, message) => {
   }
 };
 
-// This is called when the user accepts the request
 app.post(
   '/api/:user/contacts/requests/accept/:contactToAccept',
   async (req, res) => {
